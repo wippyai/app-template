@@ -76,6 +76,11 @@ entries:
     auto_init: true
     mode: "0755"
 
+  - name: public_api_url
+    kind: env.variable
+    variable: PUBLIC_API_URL
+    storage: app.env:router
+
   - name: app_fs
     kind: fs.directory
     directory: ./static
