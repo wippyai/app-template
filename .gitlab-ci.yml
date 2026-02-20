@@ -1,5 +1,6 @@
 stages:
   - lint
+  - test
   - build
 
 variables:
@@ -14,6 +15,18 @@ Lint:
   script:
     - wippy install
     - wippy lint --level error
+  tags:
+    - hetzner
+
+Test:
+  stage: test
+  image: ubuntu:22.04
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq curl > /dev/null
+    - curl -fsSL https://hub.wippy.ai/install.sh -o /tmp/wippy-install.sh && . /tmp/wippy-install.sh
+  script:
+    - wippy install
+    - wippy run test users
   tags:
     - hetzner
 
