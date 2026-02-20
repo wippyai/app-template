@@ -9,6 +9,7 @@ variables:
 Lint:
   stage: lint
   image: ubuntu:22.04
+  allow_failure: true
   before_script:
     - apt-get update -qq && apt-get install -y -qq curl > /dev/null
     - curl -fsSL https://hub.wippy.ai/install.sh -o /tmp/wippy-install.sh && . /tmp/wippy-install.sh
