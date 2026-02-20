@@ -1,0 +1,70 @@
+version: "1.0"
+namespace: app.security
+
+entries:
+  - name: admin.all_access
+    kind: security.policy
+    groups:
+      - app.security:admin
+    policy:
+      resources: '*'
+      actions: '*'
+      effect: allow
+
+  - name: ingress.forbid_registry
+    kind: security.policy
+    groups:
+      - app.security:ingress
+    policy:
+      resources: '*'
+      actions: '*'
+      conditions:
+        - field: action
+          operator: matches
+          value: ^registry\.apply\.*$
+      effect: deny
+
+  - name: ingress.general_access
+    kind: security.policy
+    groups:
+      - app.security:ingress
+    policy:
+      resources: '*'
+      actions: '*'
+      effect: allow
+
+  - name: session
+    kind: store.memory
+    cleanup_interval: 10m
+    lifecycle:
+      auto_start: true
+    max_size: 5000
+
+  - name: tokens
+    kind: security.token_store
+    default_expiration: 24h
+    store: app.security:session
+    token_key: ${ENV_TOKEN_KEY:-wippy-auth-key}
+    token_length: 32
+
+  - name: user.forbid_registry
+    kind: security.policy
+    groups:
+      - app.security:user
+    policy:
+      resources: '*'
+      actions: '*'
+      conditions:
+        - field: action
+          operator: matches
+          value: ^registry\.apply.*$
+      effect: deny
+
+  - name: user.general_access
+    kind: security.policy
+    groups:
+      - app.security:user
+    policy:
+      resources: '*'
+      actions: '*'
+      effect: allow

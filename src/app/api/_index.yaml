@@ -1,0 +1,37 @@
+version: "1.0"
+namespace: app.api
+
+entries:
+  - name: hello
+    kind: function.lua
+    source: file://hello.lua
+    modules:
+      - http
+    method: handler
+    pool:
+      size: 4
+
+  - name: hello.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:api.public
+    method: GET
+    func: hello
+    path: /hello
+
+  - name: login_page
+    kind: function.lua
+    source: file://login_page.lua
+    modules:
+      - http
+      - security
+      - time
+    method: handler
+
+  - name: login_page.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:api.public
+    method: GET
+    func: login_page
+    path: /auth/login

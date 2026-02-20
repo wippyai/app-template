@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wippy - Sign In</title>
+    <meta name="color-scheme" content="light dark">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #fafafa;
+            --card-bg: #ffffff;
+            --card-shadow: rgba(0,0,0,0.08);
+            --text: #18181b;
+            --text-muted: #71717a;
+            --text-dim: #a1a1aa;
+            --input-bg: #ffffff;
+            --input-border: #e4e4e7;
+            --input-text: #18181b;
+            --focus-border: #6366f1;
+            --focus-ring: rgba(99,102,241,0.1);
+            --btn-bg: #6366f1;
+            --btn-hover: #4f46e5;
+            --btn-text: #ffffff;
+            --error-bg: #fef2f2;
+            --error-border: #fecaca;
+            --error-text: #dc2626;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #18181b;
+                --card-bg: #27272a;
+                --card-shadow: rgba(0,0,0,0.3);
+                --text: #fafafa;
+                --text-muted: #a1a1aa;
+                --text-dim: #71717a;
+                --input-bg: #18181b;
+                --input-border: #3f3f46;
+                --input-text: #fafafa;
+                --focus-ring: rgba(99,102,241,0.15);
+                --btn-hover: #818cf8;
+                --error-bg: rgba(220,38,38,0.1);
+                --error-border: rgba(220,38,38,0.3);
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .login-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px var(--card-shadow);
+            padding: 32px;
+            width: 100%;
+            max-width: 380px;
+        }
+
+        .brand {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .brand-icon {
+            display: inline-block;
+            width: 64px;
+            height: 64px;
+            margin-bottom: 14px;
+        }
+
+        .brand-icon img { width: 100%; height: 100%; }
+
+        .brand h1 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+            letter-spacing: -0.01em;
+        }
+
+        .brand p {
+            font-size: 13px;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--input-text);
+            background: var(--input-bg);
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .form-group input:focus {
+            border-color: var(--focus-border);
+            box-shadow: 0 0 0 3px var(--focus-ring);
+        }
+
+        .form-group input::placeholder {
+            color: var(--text-dim);
+            opacity: 0.7;
+        }
+
+        .error-msg {
+            display: none;
+            margin-bottom: 16px;
+            padding: 10px 12px;
+            background: var(--error-bg);
+            border: 1px solid var(--error-border);
+            border-radius: 8px;
+            color: var(--error-text);
+            font-size: 13px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 10px;
+            background: var(--btn-bg);
+            color: var(--btn-text);
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .submit-btn:hover { background: var(--btn-hover); }
+        .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="brand">
+            <div class="brand-icon">
+                <img src="/app/wippy-icon.png" alt="Wippy">
+            </div>
+            <h1>Wippy App</h1>
+            <p>Sign in to continue</p>
+        </div>
+        <div id="error" class="error-msg"></div>
+        <form id="login-form">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input id="email" type="email" required autocomplete="email" autofocus placeholder="you@example.com">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input id="password" type="password" required autocomplete="current-password" placeholder="Enter password">
+            </div>
+            <button type="submit" class="submit-btn" id="submit-btn">Sign In</button>
+        </form>
+    </div>
+    <script>
+        const form = document.getElementById('login-form');
+        const errorEl = document.getElementById('error');
+        const submitBtn = document.getElementById('submit-btn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorEl.style.display = 'none';
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Signing in...';
+
+            try {
+                const res = await fetch('/api/public/user/token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: document.getElementById('email').value,
+                        password: document.getElementById('password').value
+                    })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Login failed');
+                }
+
+                localStorage.setItem('@wippy_token_info', JSON.stringify({ token: data.token }));
+                window.location.href = '/';
+            } catch (err) {
+                errorEl.textContent = err.message;
+                errorEl.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Sign In';
+            }
+        });
+    </script>
+</body>
+</html>

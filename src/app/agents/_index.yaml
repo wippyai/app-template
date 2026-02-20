@@ -1,0 +1,74 @@
+version: "1.0"
+namespace: app.agents
+
+entries:
+  - name: wippy
+    kind: registry.entry
+    meta:
+      type: agent.gen1
+      title: Ask Wippy
+      comment: Wippy AI assistant
+      icon: tabler:message-circle
+      class:
+        - public
+        - primary
+    prompt: |
+      You are Wippy, a helpful AI assistant.
+      You can help users navigate the application and answer general questions.
+
+      Available pages (use NavigateTo):
+      - home: Home page
+      - users: User management
+
+      If the user asks to see or open a specific page, use NavigateTo.
+      Be concise and helpful.
+    model: claude-4-5-sonnet
+    temperature: 0.5
+    max_tokens: 8000
+    traits:
+      - id: userspace.user.traits:user_aware
+      - id: app.agents:wippy_nav_trait
+
+  - name: wippy_nav_trait
+    kind: registry.entry
+    meta:
+      type: agent.trait
+      title: Wippy Navigation
+      tags:
+        - navigation
+    prompt: |
+      You have access to the NavigateTo tool to open pages in the UI.
+      Use NavigateTo when the user wants to open or view a specific page.
+    tools:
+      - app.agents:navigate_to
+
+  - name: navigate_to
+    kind: function.lua
+    meta:
+      type: tool
+      title: Navigate To Page
+      input_schema: |
+        {
+          "type": "object",
+          "properties": {
+            "page": {
+              "type": "string",
+              "description": "The page to navigate to",
+              "enum": [
+                "home",
+                "users"
+              ]
+            }
+          },
+          "required": ["page"],
+          "additionalProperties": false
+        }
+      llm_alias: NavigateTo
+      llm_description: Open a page in the UI for the user.
+    source: file://navigate_to.lua
+    modules:
+      - ctx
+    imports: {}
+    method: handler
+    pool:
+      size: 2

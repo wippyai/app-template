@@ -1,0 +1,121 @@
+version: "1.0"
+namespace: app.users
+
+entries:
+  - name: list_users
+    kind: function.lua
+    source: file://list_users.lua
+    modules:
+      - http
+    imports:
+      user_repo: userspace.user.persist:user_repo
+      user_groups_repo: userspace.user.persist:user_groups_repo
+    method: handler
+    pool:
+      size: 2
+
+  - name: list_users.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:api
+    method: GET
+    func: list_users
+    path: /users
+
+  - name: create_user
+    kind: function.lua
+    source: file://create_user.lua
+    modules:
+      - http
+      - json
+    imports:
+      user_repo: userspace.user.persist:user_repo
+    method: handler
+    pool:
+      size: 2
+
+  - name: create_user.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:api
+    method: POST
+    func: create_user
+    path: /users
+
+  - name: delete_user
+    kind: function.lua
+    source: file://delete_user.lua
+    modules:
+      - http
+    imports:
+      user_repo: userspace.user.persist:user_repo
+    method: handler
+    pool:
+      size: 2
+
+  - name: delete_user.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:api
+    method: DELETE
+    func: delete_user
+    path: /users/{id}
+
+  - name: update_user
+    kind: function.lua
+    source: file://update_user.lua
+    modules:
+      - http
+      - json
+    imports:
+      user_repo: userspace.user.persist:user_repo
+    method: handler
+    pool:
+      size: 2
+
+  - name: update_user.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:api
+    method: PUT
+    func: update_user
+    path: /users/{id}
+
+  - name: get_user_groups
+    kind: function.lua
+    source: file://get_user_groups.lua
+    modules:
+      - http
+    imports:
+      user_groups_repo: userspace.user.persist:user_groups_repo
+    method: handler
+    pool:
+      size: 2
+
+  - name: get_user_groups.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:api
+    method: GET
+    func: get_user_groups
+    path: /users/{id}/groups
+
+  - name: set_user_groups
+    kind: function.lua
+    source: file://set_user_groups.lua
+    modules:
+      - http
+      - json
+    imports:
+      user_groups_repo: userspace.user.persist:user_groups_repo
+    method: handler
+    pool:
+      size: 2
+
+  - name: set_user_groups.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:api
+    method: PUT
+    func: set_user_groups
+    path: /users/{id}/groups

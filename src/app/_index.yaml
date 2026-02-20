@@ -1,0 +1,99 @@
+version: "1.0"
+namespace: app
+
+entries:
+  - name: gateway
+    kind: http.service
+    addr: :8080
+    lifecycle:
+      auto_start: true
+
+  - name: api.public
+    kind: http.router
+    meta:
+      server: gateway
+    middleware:
+      - cors
+      - compress
+      - token_auth
+    options:
+      allow_credentials: "true"
+      allow_headers: Authorization,Content-Type
+      allow_methods: '*'
+      allow_origins: '*.wippy.ai,localhost,localhost:8080'
+      allow_private_network: "true"
+      token_store: userspace.user.security:tokens
+      compress.level: default
+      compress.min.length: "1024"
+    prefix: /api/public
+
+  - name: api
+    kind: http.router
+    meta:
+      server: gateway
+    middleware:
+      - cors
+      - compress
+      - websocket_relay
+      - token_auth
+    options:
+      allow_credentials: "true"
+      allow_headers: Authorization,Content-Type
+      allow_methods: '*'
+      allow_origins: '*.wippy.ai,localhost,localhost:8080'
+      allow_private_network: "true"
+      token_store: userspace.user.security:tokens
+      compress.level: default
+      compress.min.length: "1024"
+    post_middleware:
+      - endpoint_firewall
+    prefix: /api/v1/
+
+  - name: db
+    kind: db.sql.sqlite
+    file: ./.wippy/app.db
+    lifecycle:
+      auto_start: true
+
+  - name: cache
+    kind: store.memory
+    cleanup_interval: 5m
+    lifecycle:
+      auto_start: true
+    max_size: 5000
+
+  - name: processes
+    kind: process.host
+    host:
+      max_processes: 1000
+      workers: 8
+    lifecycle:
+      auto_start: true
+
+  - name: uploads
+    kind: fs.directory
+    directory: ./.wippy/uploads/
+    auto_init: true
+    mode: "0755"
+
+  - name: app_fs
+    kind: fs.directory
+    directory: ./static
+    auto_init: true
+
+  - name: app_static
+    kind: http.static
+    meta:
+      server: gateway
+    path: /app
+    fs: app:app_fs
+    middleware:
+      - cors
+    options:
+      allow_origins: '*'
+      allow_methods: '*'
+      allow_headers: Authorization,Content-Type
+      mime_types:
+        .js: application/javascript
+        .css: text/css
+        .html: text/html

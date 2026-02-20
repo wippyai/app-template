@@ -1,0 +1,75 @@
+version: "1.0"
+namespace: app.models
+
+entries:
+  - name: claude-4-5-haiku
+    kind: registry.entry
+    meta:
+      name: claude-4-5-haiku
+      type: llm.model
+      title: Claude 4.5 Haiku
+      comment: Fast model for general tasks
+      capabilities:
+        - tool_use
+        - vision
+        - generate
+        - structured_output
+        - coding
+      class:
+        - default
+        - fast
+      priority: 75
+    max_tokens: 200000
+    output_tokens: 8192
+    providers:
+      - id: wippy.llm.claude:provider
+        provider_model: claude-haiku-4-5-20251001
+
+  - name: claude-4-5-sonnet
+    kind: registry.entry
+    meta:
+      name: claude-4-5-sonnet
+      type: llm.model
+      title: Claude 4.5 Sonnet
+      comment: Balanced model for complex tasks
+      capabilities:
+        - tool_use
+        - vision
+        - generate
+        - structured_output
+        - coding
+      class:
+        - default
+        - balanced
+      priority: 90
+    max_tokens: 200000
+    output_tokens: 8192
+    providers:
+      - id: wippy.llm.claude:provider
+        provider_model: claude-sonnet-4-5-20250929
+
+  - name: gpt-4.1-mini
+    kind: registry.entry
+    meta:
+      name: gpt-4.1-mini
+      type: llm.model
+      title: GPT-4.1 Mini
+      comment: Fast and cost-effective
+      capabilities:
+        - tool_use
+        - vision
+        - generate
+        - structured_output
+      class:
+        - default
+        - fast
+      priority: 10
+    max_tokens: 1047576
+    output_tokens: 32768
+    pricing:
+      cached_input: 0.5
+      input: 2
+      output: 8
+    providers:
+      - id: wippy.llm.openai:provider
+        provider_model: gpt-4.1-mini

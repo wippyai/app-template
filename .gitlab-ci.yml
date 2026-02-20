@@ -1,0 +1,32 @@
+stages:
+  - lint
+  - build
+
+variables:
+  NODE_VERSION: "22"
+
+Lint:
+  stage: lint
+  image: ubuntu:22.04
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq curl > /dev/null
+    - curl -fsSL https://hub.wippy.ai/install.sh | bash
+  script:
+    - wippy install
+    - wippy lint --level error
+  tags:
+    - hetzner
+
+Build_frontend:
+  stage: build
+  image: node:${NODE_VERSION}-alpine
+  script:
+    - cd frontend
+    - npm ci
+    - npm run build
+  artifacts:
+    paths:
+      - static/dist/
+    expire_in: 1 hour
+  tags:
+    - hetzner

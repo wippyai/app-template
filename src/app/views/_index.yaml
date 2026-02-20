@@ -1,0 +1,27 @@
+version: "1.0"
+namespace: app.views
+
+entries:
+  - name: main
+    kind: registry.entry
+    meta:
+      type: view.page
+      name: main
+      title: Admin Panel
+      icon: tabler:layout-dashboard
+      order: 0
+      announced: true
+      secure: false
+      url: /app
+      entry_point: dist/app.html
+    proxy:
+      enabled: true
+      css:
+        fonts: true
+        theme_config: true
+        iframe: true
+        prime_vue: true
+        custom_css: true
+        custom_variables: true
+      tailwind_config: true
+      iconify_icons: true

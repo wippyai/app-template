@@ -1,0 +1,23 @@
+version: "1.0"
+namespace: app.api.entries
+
+entries:
+  - name: list_agents
+    kind: function.lua
+    source: file://list_agents.lua
+    modules:
+      - http
+      - registry
+    imports:
+      start_tokens: wippy.session:start_tokens
+    method: handler
+    pool:
+      size: 2
+
+  - name: list_agents.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:api
+    method: GET
+    func: list_agents
+    path: /agents/list
