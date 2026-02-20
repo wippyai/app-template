@@ -11,6 +11,7 @@ Lint:
   before_script:
     - apt-get update -qq && apt-get install -y -qq curl > /dev/null
     - curl -fsSL https://hub.wippy.ai/install.sh | bash
+    - export PATH="$HOME/.wippy/bin:$PATH"
   script:
     - wippy install
     - wippy lint --level error
