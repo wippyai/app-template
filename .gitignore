@@ -1,5 +1,6 @@
 .wippy/
 .env
+.idea/
 node_modules/
 static/dist/
 *.wapp
