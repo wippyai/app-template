@@ -1,11 +1,16 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { Icon } from '@iconify/vue'
+import { useConfig } from '../composables/useWippy'
+
+const config = useConfig()
+const logoUrl = computed(() => (config.feature?.routePrefix || '') + '/app/wippy-logo.svg')
 </script>
 
 <template>
   <div class="h-full flex items-center justify-center">
     <div class="text-center max-w-md px-6">
-      <img :src="'/app/wippy-icon.png'" alt="Wippy" class="w-16 h-16 rounded-2xl mx-auto mb-5" />
+      <img :src="logoUrl" alt="Wippy" class="w-16 h-16 rounded-2xl mx-auto mb-5" />
       <h1 class="text-xl font-semibold text-surface-900 dark:text-surface-0 mb-2">Welcome to Wippy App</h1>
       <p class="text-sm text-surface-500 mb-6">
         Manage your users and interact with the Wippy AI assistant from the sidebar.

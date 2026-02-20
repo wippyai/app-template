@@ -2,13 +2,16 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Icon } from '@iconify/vue'
-import { useApi, useHost, useOn } from '../composables/useWippy'
+import { useApi, useHost, useOn, useConfig } from '../composables/useWippy'
 
 const router = useRouter()
 const route = useRoute()
 const api = useApi()
 const host = useHost()
 const on = useOn()
+const config = useConfig()
+
+const logoUrl = computed(() => (config.feature?.routePrefix || '') + '/app/wippy-logo.svg')
 
 on('action:navigate', (data: any) => {
   const path = data?.data?.path || data?.path
@@ -82,7 +85,7 @@ onMounted(() => {
   <div class="h-full flex">
     <aside class="w-56 shrink-0 h-full border-r border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800 flex flex-col">
       <div class="px-4 py-4 flex items-center gap-2.5">
-        <img :src="'/app/wippy-icon.png'" alt="Wippy" class="w-8 h-8 rounded-lg" />
+        <img :src="logoUrl" alt="Wippy" class="w-8 h-8 rounded-lg" />
         <span class="text-sm font-bold text-surface-900 dark:text-surface-0 tracking-tight">Wippy App</span>
       </div>
 

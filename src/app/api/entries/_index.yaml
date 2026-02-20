@@ -21,3 +21,71 @@ entries:
     method: GET
     func: list_agents
     path: /agents/list
+
+  - name: agents_by_name
+    kind: function.lua
+    meta:
+      comment: Gets agent titles by their names
+      router: app:api
+    source: file://agents_by_name.lua
+    modules:
+      - http
+      - json
+      - registry
+    method: handler
+    pool:
+      size: 2
+
+  - name: agents_by_name.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:api
+    method: GET
+    func: agents_by_name
+    path: /agents/by-name
+
+  - name: list_models
+    kind: function.lua
+    meta:
+      comment: Lists all available models
+      router: app:api
+    source: file://list_models.lua
+    modules:
+      - http
+      - json
+    imports:
+      models: wippy.llm.discovery:models
+    method: handler
+    pool:
+      size: 2
+
+  - name: list_models.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:api
+    method: GET
+    func: list_models
+    path: /models/list
+
+  - name: models_by_name
+    kind: function.lua
+    meta:
+      comment: Gets model information by their names
+      router: app:api
+    source: file://models_by_name.lua
+    modules:
+      - http
+      - json
+    imports:
+      models: wippy.llm.discovery:models
+    method: handler
+    pool:
+      size: 2
+
+  - name: models_by_name.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:api
+    method: GET
+    func: models_by_name
+    path: /models/by-name

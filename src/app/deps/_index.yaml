@@ -6,6 +6,13 @@ entries:
     kind: ns.dependency
     component: userspace/users
     version: '>=v0.1.0'
+    parameters:
+      - name: env_storage
+        value: app.env:store
+      - name: public_router
+        value: app:api.public
+      - name: router
+        value: app:api
 
   - name: uploads
     kind: ns.dependency
@@ -16,6 +23,8 @@ entries:
         value: app:db
       - name: env_storage
         value: app.env:store
+      - name: router
+        value: app:api
 
   - name: bootloader
     kind: ns.dependency
@@ -33,6 +42,9 @@ entries:
     kind: ns.dependency
     component: wippy/migration
     version: '>=v0.0.7'
+    parameters:
+      - name: app_db
+        value: app:db
 
   - name: llm
     kind: ns.dependency
@@ -106,6 +118,8 @@ entries:
     parameters:
       - name: api_router
         value: app:api.public
+      - name: env_storage
+        value: app.env:store
 
   - name: security
     kind: ns.dependency

@@ -20,7 +20,7 @@ entries:
       allow_credentials: "true"
       allow_headers: Authorization,Content-Type
       allow_methods: '*'
-      allow_origins: '*.wippy.ai,localhost,localhost:8080'
+      allow_origins: '*.wippy.ai,web-host.wippy.ai,localhost,localhost:8080'
       allow_private_network: "true"
       token_store: userspace.user.security:tokens
       compress.level: default
@@ -40,7 +40,7 @@ entries:
       allow_credentials: "true"
       allow_headers: Authorization,Content-Type
       allow_methods: '*'
-      allow_origins: '*.wippy.ai,localhost,localhost:8080'
+      allow_origins: '*.wippy.ai,web-host.wippy.ai,localhost,localhost:8080'
       allow_private_network: "true"
       token_store: userspace.user.security:tokens
       compress.level: default
