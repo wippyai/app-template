@@ -1,72 +1,95 @@
 # Wippy Application Template
 
-A minimal Wippy application with user management, an admin panel, and an "Ask Wippy" AI assistant.
+A starter Wippy application with user management, AI assistant, and admin frontend.
 
 ## Prerequisites
 
-- [Wippy CLI](https://wippy.ai) installed
+- [Wippy CLI](https://wippy.ai)
 - Node.js 18+
 
 ## Quick Start
 
 ```bash
-# Copy environment config
 cp .env.example .env
-
-# Install dependencies and build frontend
 make build
-
-# Start the server
 wippy run -c
 ```
 
-The application starts on `http://localhost:8080`.
-
-Default admin credentials:
-- Email: `admin@wippy.local`
-- Password: `admin123`
+Open `http://localhost:8080`. Default admin: `admin@wippy.local` / `admin123`.
 
 ## Development
 
 ```bash
-# Watch mode for frontend changes
+# Frontend watch mode
 make dev
 
-# Run server separately
+# Server (separate terminal)
 wippy run -c
 ```
+
+## Configuration
+
+All runtime configuration is driven by environment variables and the facade dependency parameters in `src/app/deps/_index.yaml`.
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `PUBLIC_API_URL` | Public-facing API URL | `http://localhost:8080` |
+| `ENCRYPTION_KEY` | Data encryption key (hex) | Auto-generated on first boot |
+| `ANTHROPIC_API_KEY` | Claude API key for AI assistant | - |
+
+### Facade Parameters
+
+The `wippy/facade` dependency controls the frontend shell:
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `app_title` | Sidebar title | `Wippy` |
+| `app_name` | Full app name | `Wippy AI` |
+| `app_icon` | Iconify icon reference | `wippy:logo` |
+| `show_admin` | Show admin controls | `true` |
+| `hide_nav_bar` | Hide left sidebar | `false` |
+| `start_nav_open` | Nav open on load | `false` |
+| `allow_select_model` | User model selection | `false` |
+| `disable_right_panel` | Disable right sidebar | `false` |
+| `session_type` | `non-persistent` or `cookie` | `non-persistent` |
+| `history_mode` | `hash` or `history` | `hash` |
+| `login_path` | Unauthenticated redirect | `/login.html` |
+| `custom_css` | CSS injected into frontend | Poppins font import |
+| `css_variables` | JSON object of CSS custom properties | `{}` |
+| `icons` | JSON object of custom Iconify icons | `{}` |
+
+CSS variables use PrimeVue naming: `p-primary`, `p-primary-500`, `p-surface-0`, `p-text-color`, etc.
 
 ## Structure
 
 ```
-src/app/          Backend modules (Wippy Lua)
-  api/            HTTP endpoints (hello, login, agents list, websocket)
-  agents/         AI agent definitions (Wippy assistant)
-  users/          User CRUD endpoints
-  security/       Access control policies
-  models/         LLM model definitions
+src/app/          Backend (Wippy Lua)
+  api/            HTTP endpoints
+  agents/         AI agent definitions
+  users/          User management
+  security/       Access control
+  models/         LLM model config
   views/          Frontend page registration
-  deps/           Wippy module dependencies
-  env/            Environment variable management
+  deps/           Module dependencies
+  env/            Environment storage
 
 frontend/         Vue 3 admin panel
   src/pages/      Home, Users
-  src/app/        App shell with sidebar navigation
+  src/app/        App shell with sidebar
   src/router/     Client-side routing
 
 static/           Static assets (login page)
 ```
 
-## Features
+## Testing
 
-- User management (create, edit, delete, security groups)
-- AI assistant ("Ask Wippy") with page navigation
-- SQLite database (auto-created)
-- Token-based authentication
-- Dark/light theme support
+```bash
+wippy run test users
+```
 
 ## Documentation
 
-Wippy documentation is available at [wippy.ai](https://wippy.ai).
-
-For LLM-friendly docs (use with AI coding assistants): [wippy.ai/llms.txt](https://wippy.ai/llms.txt)
+- [wippy.ai](https://wippy.ai) - Full documentation
+- [wippy.ai/llms.txt](https://wippy.ai/llms.txt) - LLM-friendly docs

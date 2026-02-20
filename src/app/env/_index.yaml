@@ -14,7 +14,7 @@ entries:
     lifecycle:
       auto_start: true
 
-  - name: router
+  - name: store
     kind: env.storage.router
     lifecycle:
       auto_start: true

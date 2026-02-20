@@ -15,7 +15,7 @@ entries:
       - name: database_resource
         value: app:db
       - name: env_storage
-        value: app.env:router
+        value: app.env:store
 
   - name: bootloader
     kind: ns.dependency
@@ -27,7 +27,7 @@ entries:
       - name: app_db
         value: app:db
       - name: env_storage
-        value: app.env:router
+        value: app.env:store
 
   - name: migration
     kind: ns.dependency
@@ -42,7 +42,7 @@ entries:
       - name: process_host
         value: app:processes
       - name: env_storage
-        value: app.env:router
+        value: app.env:store
 
   - name: agent
     kind: ns.dependency
@@ -57,7 +57,7 @@ entries:
       - name: user_security_scope
         value: app.security:user
       - name: env_storage
-        value: app.env:router
+        value: app.env:store
       - name: application_host
         value: app:processes
       - name: max_connections_per_user
@@ -79,7 +79,7 @@ entries:
       - name: default_host
         value: app:processes
       - name: env_storage
-        value: app.env:router
+        value: app.env:store
       - name: delegation_func_id
         value: userspace.dataflow.session:delegate
       - name: token_checkpoint_threshold
@@ -131,7 +131,7 @@ entries:
   - name: facade
     kind: ns.dependency
     component: wippy/facade
-    version: '>=v0.5.0'
+    version: '>=v0.5.16'
     parameters:
       - name: server
         value: app:gateway
@@ -141,9 +141,17 @@ entries:
         value: Wippy App
       - name: app_name
         value: Wippy App
+      - name: app_icon
+        value: "wippy:logo"
       - name: show_admin
         value: "false"
       - name: hide_nav_bar
         value: "true"
       - name: login_path
         value: /app/login.html
+      - name: session_type
+        value: non-persistent
+      - name: history_mode
+        value: hash
+      - name: css_variables
+        value: '{"p-primary":"#6366f1","p-primary-50":"#eef2ff","p-primary-100":"#e0e7ff","p-primary-200":"#c7d2fe","p-primary-300":"#a5b4fc","p-primary-400":"#818cf8","p-primary-500":"#6366f1","p-primary-600":"#4f46e5","p-primary-700":"#4338ca","p-primary-800":"#3730a3","p-primary-900":"#312e81","p-primary-950":"#1e1b4b"}'
