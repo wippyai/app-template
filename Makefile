@@ -7,4 +7,4 @@ dev:
 	cd frontend && npm run dev
 
 run: build
-	./wippy run -c
+	wippy run -c
