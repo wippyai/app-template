@@ -166,6 +166,6 @@ entries:
       - name: session_type
         value: non-persistent
       - name: history_mode
-        value: hash
+        value: browser
       - name: css_variables
         value: '{"p-primary":"#6366f1","p-primary-50":"#eef2ff","p-primary-100":"#e0e7ff","p-primary-200":"#c7d2fe","p-primary-300":"#a5b4fc","p-primary-400":"#818cf8","p-primary-500":"#6366f1","p-primary-600":"#4f46e5","p-primary-700":"#4338ca","p-primary-800":"#3730a3","p-primary-900":"#312e81","p-primary-950":"#1e1b4b"}'

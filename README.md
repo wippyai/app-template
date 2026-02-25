@@ -20,8 +20,12 @@ Open `http://localhost:8080`. Default admin: `admin@wippy.local` / `admin123`.
 ## Development
 
 ```bash
-# Frontend watch mode
-make dev
+# Build all frontend packages
+cd frontend/applications/main && npm install && npm run build -- --outDir ../../../static/app/main --emptyOutDir
+cd frontend/web-components/example && npm install && npm run build -- --outDir ../../../static/wc/example --emptyOutDir
+
+# Frontend watch mode (main app)
+cd frontend/applications/main && npm run dev
 
 # Server (separate terminal)
 wippy run -c
@@ -65,22 +69,23 @@ CSS variables use PrimeVue naming: `p-primary`, `p-primary-500`, `p-surface-0`, 
 ## Structure
 
 ```
-src/app/          Backend (Wippy Lua)
-  api/            HTTP endpoints
-  agents/         AI agent definitions
-  users/          User management
-  security/       Access control
-  models/         LLM model config
-  views/          Frontend page registration
-  deps/           Module dependencies
-  env/            Environment storage
+src/app/                          Backend (Wippy Lua)
+  api/                            HTTP endpoints
+  agents/                         AI agent definitions
+  users/                          User management
+  security/                       Access control
+  models/                         LLM model config
+  views/                          Frontend page registration
+  deps/                           Module dependencies
+  env/                            Environment storage
 
-frontend/         Vue 3 admin panel
-  src/pages/      Home, Users
-  src/app/        App shell with sidebar
-  src/router/     Client-side routing
+frontend/
+  applications/main/              Vue 3 admin panel
+  web-components/example/         Example web component
 
-static/           Static assets (login page)
+static/                           Static assets (login page)
+  app/main/                       Built main app (generated)
+  wc/example/                     Built web component (generated)
 ```
 
 ## Testing

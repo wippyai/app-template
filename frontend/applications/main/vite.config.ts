@@ -6,8 +6,6 @@ export default defineConfig({
   plugins: [vue()],
   base: '',
   build: {
-    outDir: '../static/dist',
-    emptyOutDir: true,
     cssCodeSplit: false,
     rollupOptions: {
       input: { app: resolve(__dirname, 'app.html') },

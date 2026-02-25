@@ -1,5 +1,11 @@
 .wippy/
 .env
 node_modules/
-static/dist/
+static/app/
+static/wc/
+frontend/**/dist/
 *.wapp
+wippy.exe
+CLAUDE.md
+.idea
+.claude

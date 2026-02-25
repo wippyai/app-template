@@ -13,7 +13,7 @@ entries:
       announced: true
       secure: false
       url: /app
-      entry_point: dist/app.html
+      entry_point: app/main/app.html
     proxy:
       enabled: true
       css:
