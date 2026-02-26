@@ -13,7 +13,8 @@ entries:
       announced: true
       secure: false
       url: /app
-      entry_point: app/main/app.html
+      base_path: app/main
+      entry_point: app.html
     proxy:
       enabled: true
       css:
@@ -25,3 +26,50 @@ entries:
         custom_variables: true
       tailwind_config: true
       iconify_icons: true
+
+  - name: uploads-manager
+    kind: registry.entry
+    meta:
+      type: view.component
+      name: uploads-manager
+      title: File Upload Manager
+      tag_name: uploads-manager
+      entry_point: index.js
+      announced: true
+      secure: false
+      auto_register: true
+      url: /app/wc/example
+      props:
+        type: object
+        properties:
+          allowed-types:
+            type: array
+            items:
+              type: string
+            default: []
+            description: Array of allowed MIME types (empty for all types)
+          max-file-size:
+            type: number
+            default: 104857600
+            description: Maximum file size in bytes (100MB default)
+      events:
+        type: object
+        properties:
+          upload-complete:
+            type: object
+            properties:
+              uuid:
+                type: string
+              filename:
+                type: string
+              size:
+                type: number
+            description: Fired when a file upload completes successfully
+          upload-error:
+            type: object
+            properties:
+              filename:
+                type: string
+              error:
+                type: string
+            description: Fired when a file upload fails

@@ -2,18 +2,17 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Icon } from '@iconify/vue'
-import { useApi, useHost, useOn, useConfig } from '../composables/useWippy'
+import { useApi, useHost, useWippy } from '../composables/useWippy'
 
 const router = useRouter()
 const route = useRoute()
 const api = useApi()
 const host = useHost()
-const on = useOn()
-const config = useConfig()
+const instance = useWippy()
 
-const logoUrl = computed(() => (config.feature?.routePrefix || '') + '/app/wippy-logo.svg')
+const logoUrl = computed(() => '/app/wippy-logo.svg')
 
-on('action:navigate', (data: any) => {
+instance.on('action:navigate', (data: any) => {
   const path = data?.data?.path || data?.path
   if (path) router.push(path)
 })

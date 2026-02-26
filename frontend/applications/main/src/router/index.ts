@@ -1,6 +1,11 @@
 import { createMemoryHistory, createRouter } from 'vue-router'
 import type { Router } from 'vue-router'
-import type { HostApi, OnSubscription } from '../types/wippy'
+import type { HostApi } from '../types'
+
+type OnSubscription = (
+  pattern: string,
+  callback: (event: { path?: string; message?: unknown }) => void,
+) => void
 
 const routes = [
   {
@@ -12,6 +17,11 @@ const routes = [
     path: '/users',
     name: 'users',
     component: () => import('../pages/users.vue'),
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    redirect: '/',
   },
 ]
 

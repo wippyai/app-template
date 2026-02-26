@@ -8,12 +8,11 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
     "noEmit": true,
-    "paths": {
-      "vue": ["./node_modules/vue/dist/vue.d.ts"]
-    }
+    "types": ["vite/client", "@wippy-fe/types-global-proxy"]
   },
-  "include": ["src/**/*.ts", "src/**/*.vue"]
+  "include": ["src/**/*.ts", "src/**/*.vue", "vite.config.ts"]
 }

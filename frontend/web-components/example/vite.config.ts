@@ -1,30 +1,40 @@
-import { defineConfig } from 'vite'
+import { resolve } from 'node:path'
 import vue from '@vitejs/plugin-vue'
-import { resolve } from 'path'
+import { defineConfig } from 'vite'
 
 export default defineConfig({
-  plugins: [vue()],
-  base: '',
+  plugins: [
+    vue(),
+  ],
   build: {
-    cssCodeSplit: false,
+    target: 'esnext',
+    lib: {
+      entry: resolve(__dirname, 'src/index.ts'),
+      name: 'UploadsManager',
+      fileName: 'index',
+      formats: ['es'],
+    },
     rollupOptions: {
-      input: { app: resolve(__dirname, 'app.html') },
+      input: {
+        index: resolve(__dirname, 'src/index.ts'),
+      },
+      // Externalize dependencies that are provided by the import map
       external: [
         'vue',
-        'vue-router',
+        'pinia',
         '@iconify/vue',
-        'primevue',
-        'primevue/config',
-        'primevue/button',
-        'primevue/tag',
-        'primevue/dialog',
-        'primevue/checkbox',
-        'axios',
+        'nanoevents',
+        'luxon',
+        '@wippy-fe/proxy',
       ],
       output: {
+        // Enable to test dynamic imports and bundle content
+        // preserveModules: true,
         entryFileNames: '[name].js',
+        chunkFileNames: '[name]-[hash].js',
         assetFileNames: '[name]-[hash][extname]',
-      },
+      }
     },
+    sourcemap: true,
   },
 })

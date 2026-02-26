@@ -1,6 +1,6 @@
 import { inject } from 'vue'
-import { HOST_API, AXIOS_INSTANCE, ON_SUBSCRIPTION, WIPPY_CONFIG } from '../constants'
-import type { HostApi, ProxyApiInstance, OnSubscription, WippyConfig } from '../types/wippy'
+import { HOST_API, AXIOS_INSTANCE, WIPPY_INSTANCE } from '../constants'
+import type { HostApi, ProxyApiInstance } from '../types'
 
 export function useHost(): HostApi {
   const host = inject(HOST_API)
@@ -8,20 +8,14 @@ export function useHost(): HostApi {
   return host
 }
 
-export function useApi(): ProxyApiInstance {
+export function useApi(): ProxyApiInstance['api'] {
   const api = inject(AXIOS_INSTANCE)
   if (!api) throw new Error('ProxyApiInstance not provided')
   return api
 }
 
-export function useOn(): OnSubscription {
-  const on = inject(ON_SUBSCRIPTION)
-  if (!on) throw new Error('OnSubscription not provided')
-  return on
-}
-
-export function useConfig(): WippyConfig {
-  const config = inject(WIPPY_CONFIG)
-  if (!config) throw new Error('WippyConfig not provided')
-  return config
+export function useWippy(): ProxyApiInstance {
+  const instance = inject(WIPPY_INSTANCE)
+  if (!instance) throw new Error('WIPPY_INSTANCE not provided')
+  return instance
 }

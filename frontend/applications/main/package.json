@@ -1,33 +1,52 @@
 {
-  "name": "@wippy/frontend",
+  "name": "@wippy/app-main",
   "version": "1.0.0",
-  "private": true,
   "specification": "wippy-component-1.0",
   "title": "Wippy App",
+  "description": "Main application page for Wippy platform",
+  "files": ["dist/", "src/", "package.json"],
   "browser": "dist/app.js",
   "wippy": {
     "type": "page",
+    "title": "Wippy App",
+    "icon": "tabler:home",
     "path": "dist/app.html",
     "proxy": {
-      "css": {
-        "prime_vue": true,
-        "custom_css": true,
-        "custom_variables": true
+      "enabled": true,
+      "injections": {
+        "css": {
+          "fonts": true,
+          "themeConfig": true,
+          "iframe": true,
+          "primevue": true,
+          "markdown": true,
+          "customCss": true,
+          "customVariables": true
+        },
+        "tailwindConfig": false,
+        "resizeObserver": false,
+        "preventLinkClicks": false,
+        "iconifyIcons": false
       }
+    },
+    "scripts": {
+      "build": "build",
+      "debug": "build:debug"
     }
   },
   "scripts": {
     "build": "vite build",
+    "build:debug": "vite build --mode development",
     "dev": "vite build --watch",
     "type-check": "vue-tsc --build --force"
   },
   "devDependencies": {
-    "@iconify/vue": "^4.0.0",
+    "@wippy-fe/types-global-proxy": "^0.0.1",
     "@vitejs/plugin-vue": "^5.0.0",
     "autoprefixer": "^10.4.0",
-    "axios": "^1.7.0",
     "postcss": "^8.4.0",
-    "primevue": "^4.0.0",
+    "primevue": "^4.3.3",
+    "tailwind-scrollbar": "^3.0.0",
     "tailwindcss": "3",
     "tailwindcss-primeui": "^0.6.1",
     "typescript": "^5.0.0",
@@ -37,9 +56,12 @@
     "vue-tsc": "^2.0.0"
   },
   "peerDependencies": {
-    "@iconify/vue": "^4.0.0",
+    "@iconify/vue": "^5.0.0",
+    "@wippy-fe/proxy": "^0.0.1",
     "axios": "^1.0.0",
-    "primevue": "^4.0.0",
+    "luxon": "^3.5.0",
+    "pinia": "^2.1.0",
+    "primevue": "^4.3.3",
     "vue": "^3.5.0",
     "vue-router": "^4.0.0"
   }

@@ -1,10 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { Icon } from '@iconify/vue'
-import { useConfig } from '../composables/useWippy'
 
-const config = useConfig()
-const logoUrl = computed(() => (config.feature?.routePrefix || '') + '/app/wippy-logo.svg')
+const logoUrl = '/app/wippy-logo.svg'
 </script>
 
 <template>
