@@ -724,7 +724,7 @@ Examples: `@anthropic/app-analytics-dashboard`, `@acme/app-user-settings`
   "files": ["dist/", "src/", "package.json"],
   "dependencies": {},
   "devDependencies": {
-    "@wippy-fe/types-global-proxy": "^0.0.3",
+    "@wippy-fe/types-global-proxy": "^0.0.6",
     "@vitejs/plugin-vue": "^5.0.0",
     "autoprefixer": "^10.4.0",
     "postcss": "^8.4.0",
@@ -740,7 +740,7 @@ Examples: `@anthropic/app-analytics-dashboard`, `@acme/app-user-settings`
   },
   "peerDependencies": {
     "@iconify/vue": "^5.0.0",
-    "@wippy-fe/proxy": "^0.0.3",
+    "@wippy-fe/proxy": "^0.0.6",
     "axios": "^1.0.0",
     "pinia": "^2.1.0",
     "primevue": "^4.3.3",

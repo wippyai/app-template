@@ -6,12 +6,6 @@ export default defineConfig({
   plugins: [
     vue(),
   ],
-  resolve: {
-    alias: {
-      '@wippy-fe/webcomponent-core': resolve(__dirname, '../../npm/webcomponent-core/src'),
-      '@wippy-fe/webcomponent-vue': resolve(__dirname, '../../npm/webcomponent-vue/src'),
-    },
-  },
   build: {
     target: 'esnext',
     lib: {

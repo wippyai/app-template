@@ -71,14 +71,14 @@ Use this for components that only need theme variables and custom CSS (like `web
   "browser": "dist/index.js",
   "files": ["dist/", "src/", "package.json"],
   "dependencies": {
-    "@wippy-fe/webcomponent-core": "file:../../npm/webcomponent-core",
-    "@wippy-fe/webcomponent-vue": "file:../../npm/webcomponent-vue"
+    "@wippy-fe/webcomponent-core": "^0.0.6",
+    "@wippy-fe/webcomponent-vue": "^0.0.6"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "@vitejs/plugin-vue": "^5.0.0",
-    "@wippy-fe/proxy": "^0.0.3",
+    "@wippy-fe/proxy": "^0.0.6",
     "eslint": "^8.57.0",
     "eslint-plugin-vue": "^9.0.0",
     "typescript": "^5.0.0",
@@ -88,7 +88,7 @@ Use this for components that only need theme variables and custom CSS (like `web
     "vue-tsc": "^2.0.0"
   },
   "peerDependencies": {
-    "@wippy-fe/proxy": "^0.0.3",
+    "@wippy-fe/proxy": "^0.0.6",
     "vue": "^3.5.0"
   },
   "wippy": {
@@ -134,12 +134,6 @@ import { defineConfig } from 'vite'
 
 export default defineConfig({
   plugins: [vue()],
-  resolve: {
-    alias: {
-      '@wippy-fe/webcomponent-core': resolve(__dirname, '../../npm/webcomponent-core/src'),
-      '@wippy-fe/webcomponent-vue': resolve(__dirname, '../../npm/webcomponent-vue/src'),
-    },
-  },
   build: {
     target: 'esnext',
     lib: {
@@ -191,13 +185,7 @@ export default defineConfig({
     "noFallthroughCasesInSwitch": true,
     "types": ["vite/client", "@wippy-fe/proxy"],
     "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "paths": {
-      "@wippy-fe/webcomponent-core": ["../../npm/webcomponent-core/src"],
-      "@wippy-fe/webcomponent-core/*": ["../../npm/webcomponent-core/src/*"],
-      "@wippy-fe/webcomponent-vue": ["../../npm/webcomponent-vue/src"],
-      "@wippy-fe/webcomponent-vue/*": ["../../npm/webcomponent-vue/src/*"]
-    }
+    "esModuleInterop": true
   },
   "include": ["src/**/*.ts", "src/**/*.vue"],
   "references": [{ "path": "./tsconfig.node.json" }]
@@ -388,15 +376,15 @@ Only the files that **differ** from Variant A are shown.
 ```json
 {
   "dependencies": {
-    "@wippy-fe/webcomponent-core": "file:../../npm/webcomponent-core",
-    "@wippy-fe/webcomponent-vue": "file:../../npm/webcomponent-vue",
+    "@wippy-fe/webcomponent-core": "^0.0.6",
+    "@wippy-fe/webcomponent-vue": "^0.0.6",
     "primevue": "^4.3.3"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "@vitejs/plugin-vue": "^5.0.0",
-    "@wippy-fe/proxy": "^0.0.3",
+    "@wippy-fe/proxy": "^0.0.6",
     "autoprefixer": "^10.4.0",
     "eslint": "^8.57.0",
     "eslint-plugin-vue": "^9.0.0",
@@ -410,7 +398,7 @@ Only the files that **differ** from Variant A are shown.
     "vue-tsc": "^2.0.0"
   },
   "peerDependencies": {
-    "@wippy-fe/proxy": "^0.0.3",
+    "@wippy-fe/proxy": "^0.0.6",
     "vue": "^3.5.0"
   }
 }

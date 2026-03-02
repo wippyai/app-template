@@ -17,13 +17,7 @@
     "noFallthroughCasesInSwitch": true,
     "types": ["vite/client", "@wippy-fe/proxy"],
     "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "paths": {
-      "@wippy-fe/webcomponent-core": ["../../npm/webcomponent-core/src"],
-      "@wippy-fe/webcomponent-core/*": ["../../npm/webcomponent-core/src/*"],
-      "@wippy-fe/webcomponent-vue": ["../../npm/webcomponent-vue/src"],
-      "@wippy-fe/webcomponent-vue/*": ["../../npm/webcomponent-vue/src/*"]
-    }
+    "esModuleInterop": true
   },
   "include": ["src/**/*.ts", "src/**/*.vue"],
   "references": [{ "path": "./tsconfig.node.json" }]
