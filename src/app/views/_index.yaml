@@ -27,49 +27,184 @@ entries:
       tailwind_config: true
       iconify_icons: true
 
-  - name: uploads-manager
+  - name: reaction-bar
     kind: registry.entry
     meta:
       type: view.component
-      name: uploads-manager
-      title: File Upload Manager
-      tag_name: uploads-manager
+      name: reaction-bar
+      title: Reaction Bar
+      tag_name: example-reaction-bar
       entry_point: index.js
       announced: true
       secure: false
       auto_register: true
-      url: /app/wc/example
+      url: /app/wc/reaction-bar
       props:
         type: object
         properties:
-          allowed-types:
+          reactions:
+            type: array
+            items:
+              type: string
+            default: ["👍", "👎", "❤️", "🎉", "🤔"]
+            description: Array of emoji reactions to display
+          allow-multiple:
+            type: boolean
+            default: false
+            description: Whether multiple reactions can be active simultaneously
+      events:
+        type: object
+        properties:
+          reaction:
+            type: object
+            properties:
+              emoji:
+                type: string
+              count:
+                type: number
+              active:
+                type: boolean
+            description: Fired when a reaction is toggled
+
+  - name: websocket-log
+    kind: registry.entry
+    meta:
+      type: view.component
+      name: websocket-log
+      title: WebSocket Log
+      tag_name: example-websocket-log
+      entry_point: index.js
+      announced: true
+      secure: false
+      auto_register: true
+      url: /app/wc/websocket-log
+      props:
+        type: object
+        properties:
+          topics:
+            type: array
+            items:
+              type: string
+            default: ["@message"]
+            description: Array of WebSocket topics to subscribe to
+          max-entries:
+            type: number
+            default: 100
+            description: Maximum number of log entries to keep
+
+  - name: chart-circle
+    kind: registry.entry
+    meta:
+      type: view.component
+      name: chart-circle
+      title: Chart Circle
+      tag_name: example-chart-circle
+      entry_point: index.js
+      announced: true
+      secure: false
+      auto_register: true
+      url: /app/wc/chart-circle
+      props:
+        type: object
+        properties:
+          labels:
+            type: array
+            items:
+              type: string
+            default: ["Red", "Blue", "Yellow"]
+            description: Labels for chart segments
+          values:
+            type: array
+            items:
+              type: number
+            default: [300, 50, 100]
+            description: Values for chart segments
+          title:
+            type: string
+            default: "Sample Chart"
+            description: Chart title
+
+  - name: mermaid
+    kind: registry.entry
+    meta:
+      type: view.component
+      name: mermaid
+      title: Mermaid Diagram
+      tag_name: example-mermaid
+      entry_point: index.js
+      announced: true
+      secure: false
+      auto_register: true
+      url: /app/wc/mermaid
+      props:
+        type: object
+        properties:
+          definition:
+            type: string
+            default: ""
+            description: Mermaid diagram definition string
+          transparent:
+            type: boolean
+            default: true
+            description: Whether the diagram background is transparent
+
+  - name: markdown
+    kind: registry.entry
+    meta:
+      type: view.component
+      name: markdown
+      title: Markdown Viewer
+      tag_name: example-markdown
+      entry_point: index.js
+      announced: true
+      secure: false
+      auto_register: true
+      url: /app/wc/markdown
+      props:
+        type: object
+        properties:
+          content:
+            type: string
+            default: ""
+            description: Markdown text to render
+          allowed-tags:
             type: array
             items:
               type: string
             default: []
-            description: Array of allowed MIME types (empty for all types)
-          max-file-size:
-            type: number
-            default: 104857600
-            description: Maximum file size in bytes (100MB default)
+            description: Override sanitization tag whitelist (empty = use built-in defaults)
+          allowed-attributes:
+            type: string
+            default: ""
+            description: JSON object of tag→attributes mappings for sanitize-html
+
+  - name: model-gallery
+    kind: registry.entry
+    meta:
+      type: view.component
+      name: model-gallery
+      title: Model Gallery
+      tag_name: example-model-gallery
+      entry_point: index.js
+      announced: true
+      secure: false
+      auto_register: true
+      url: /app/wc/model-gallery
+      props:
+        type: object
+        properties:
+          show-details:
+            type: boolean
+            default: true
+            description: Whether to show model details (description, capabilities)
       events:
         type: object
         properties:
-          upload-complete:
+          model-selected:
             type: object
             properties:
-              uuid:
+              name:
                 type: string
-              filename:
+              provider:
                 type: string
-              size:
-                type: number
-            description: Fired when a file upload completes successfully
-          upload-error:
-            type: object
-            properties:
-              filename:
-                type: string
-              error:
-                type: string
-            description: Fired when a file upload fails
+            description: Fired when a model card is clicked

@@ -1,0 +1,82 @@
+@import "theme-config.css";
+
+.ws-log-container {
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  background: var(--p-content-background, #ffffff);
+  color: var(--p-text-color, #333);
+  border-radius: var(--p-content-border-radius, 6px);
+  border: 1px solid var(--p-content-border-color, #e5e7eb);
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.ws-log-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: color-mix(in srgb, var(--p-content-background) 85%, var(--p-text-color) 15%);
+  border-bottom: 1px solid var(--p-content-border-color, #e5e7eb);
+  font-size: 11px;
+  color: var(--p-text-muted-color, #999);
+}
+
+.ws-log-header .status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ws-log-header .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--p-green-500, #22c55e);
+}
+
+.ws-log-entries {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.ws-log-entry {
+  padding: 2px 12px;
+  display: flex;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.ws-log-entry:hover {
+  background: color-mix(in srgb, var(--p-content-background) 90%, var(--p-text-color) 10%);
+}
+
+.ws-log-entry .time {
+  color: var(--p-text-muted-color, #999);
+  flex-shrink: 0;
+}
+
+.ws-log-entry .topic {
+  color: var(--p-primary-500, #6366f1);
+  flex-shrink: 0;
+  min-width: 80px;
+}
+
+.ws-log-entry .data {
+  color: var(--p-text-color, #333);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ws-log-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--p-text-muted-color, #999);
+  font-style: italic;
+}

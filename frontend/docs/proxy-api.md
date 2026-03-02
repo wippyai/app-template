@@ -1,0 +1,538 @@
+# Wippy Proxy API
+
+> **CRITICAL: NOT STANDALONE**
+>
+> Web apps and components do **NOT** work outside Wippy. They run in iframes with host-injected configuration. Direct browser testing will fail - the `$W` global and `getWippyApi()` only exist when loaded within the Wippy host application.
+
+## Initialization
+
+To integrate with Wippy, use the `getWippyApi()` promise or the `$W` global variable.
+
+```typescript
+// Using getWippyApi()
+const { config, host, api, on } = await getWippyApi()
+
+// Or use the $W global for individual access
+const config = await $W.config()
+const host = await $W.host()
+const api = await $W.api()
+const on = await $W.on()
+const instance = await $W.instance() // Full ProxyApiInstance
+```
+
+The initialization returns the following components:
+
+1. `config` - Application configuration (path, artifactId, auth, customization)
+2. `host` - Host application communication methods
+3. `api` - Authenticated axios instance with automatic auth token injection
+4. `on` - Subscription to real-time events from WebSocket layer
+5. `loadWebComponent` - Function to dynamically load other web components
+
+---
+
+## host Object
+
+The `host` object provides methods to communicate with the Wippy host application.
+
+### startChat
+
+```typescript
+host.startChat(start_token: string, options?: { sidebar?: boolean }): void
+```
+
+Initiates a new chat session using the provided token.
+
+- `start_token` - Token to start the chat session
+- `options.sidebar` - When `true`, opens chat in the right sidebar panel; when `false` (default), opens in main content area
+
+```typescript
+host.startChat('my-start-token')                    // Opens in main area
+host.startChat('my-start-token', { sidebar: true }) // Opens in sidebar
+```
+
+### openSession
+
+```typescript
+host.openSession(sessionUUID: string, options?: { sidebar?: boolean }): void
+```
+
+Navigates to an existing chat session.
+
+- `sessionUUID` - UUID of the chat session to open
+- `options.sidebar` - When `true`, opens in sidebar; when `false` (default), opens in main area
+
+```typescript
+host.openSession('abc-123-uuid', { sidebar: false })
+```
+
+### openArtifact
+
+```typescript
+host.openArtifact(artifactUUID: string, options?: { target: 'modal' | 'sidebar' }): void
+```
+
+Opens an artifact in a modal or sidebar.
+
+- `artifactUUID` - UUID of the artifact to open
+- `options.target` - Where to display the artifact: `'modal'` or `'sidebar'` (default)
+
+```typescript
+host.openArtifact('artifact-uuid', { target: 'modal' })
+```
+
+### setContext
+
+```typescript
+host.setContext(
+  context: Record<string, unknown>,
+  sessionUUID?: string,
+  source?: { type: 'page' | 'artifact'; uuid: string; instanceUUID?: string }
+): void
+```
+
+Sets the context for a chat session. This context can include any arbitrary data that you want to pass along with the chat session.
+
+**Parameters:**
+- `context` - Arbitrary data object to send as context
+- `sessionUUID` - Optional UUID of a specific session to attach context to
+- `source` - Optional identifier for where the context originated
+
+**Behavior:**
+- If `sessionUUID` is provided, sends context to that specific session
+- If `sessionUUID` is omitted, sends to the last session opened via `startChat` or `openSession`
+- If no session is open yet, context is queued and replayed when a session starts
+- The `source` parameter identifies which page/artifact sent the context (useful for tracking)
+
+```typescript
+// Send to last opened session
+host.setContext({ currentPage: 'dashboard', selectedItems: [1, 2, 3] })
+
+// Send to specific session
+host.setContext(
+  { documentId: 'doc-123' },
+  'session-uuid-456',
+  { type: 'page', uuid: 'page-uuid-789' }
+)
+```
+
+### navigate
+
+```typescript
+host.navigate(url: string): void
+```
+
+Requests navigation to a specific URL. Supported URL patterns:
+
+- `/c/<page-id>` - Navigates to a dynamic page
+- `/c/<page-id>/<sub-path>` - Navigates to a dynamic page with sub-path
+- `/chat/<session-id>` - Navigates to a chat session
+
+```typescript
+host.navigate('/c/my-page-id')
+host.navigate('/chat/session-uuid')
+```
+
+### onRouteChanged
+
+```typescript
+host.onRouteChanged(path: string): void
+```
+
+Notifies the host application of internal route changes within the iframe. This updates the host browser URL to reflect the current iframe route.
+
+**Usage in Vue Router:**
+```typescript
+router.afterEach((to) => {
+  host.onRouteChanged(to.fullPath)
+})
+```
+
+### confirm
+
+```typescript
+host.confirm(options: LimitedConfirmationOptions): Promise<boolean>
+```
+
+Shows a PrimeVue confirmation dialog. Returns a promise that resolves to `true` if accepted, `false` if rejected.
+
+```typescript
+const result = await host.confirm({
+  message: 'Are you sure you want to delete this item?',
+  header: 'Confirm Delete',
+  icon: 'tabler:trash',
+  acceptLabel: 'Delete',
+  rejectLabel: 'Cancel',
+  acceptClass: 'p-button-danger',
+})
+
+if (result) {
+  // User confirmed
+}
+```
+
+### toast
+
+```typescript
+host.toast(options: ToastMessageOptions): void
+```
+
+Shows a PrimeVue toast notification.
+
+```typescript
+host.toast({
+  severity: 'success',
+  summary: 'Success',
+  detail: 'Operation completed successfully',
+  life: 3000
+})
+```
+
+Common severities: `'success'`, `'info'`, `'warn'`, `'error'`
+
+### handleError
+
+```typescript
+host.handleError(code: 'auth-expired' | 'other', error: Record<string, unknown>): void
+```
+
+Reports errors to the host application for handling.
+
+- `'auth-expired'` - Triggers re-authentication flow
+- `'other'` - General error handling
+
+```typescript
+try {
+  await api.get('/protected-endpoint')
+} catch (error) {
+  if (error.response?.status === 401) {
+    host.handleError('auth-expired', error)
+  } else {
+    host.handleError('other', error)
+  }
+}
+```
+
+### formatUrl
+
+```typescript
+host.formatUrl(relativeUrl: string): string
+```
+
+Converts a relative URL to an absolute URL using the host's base URL. Useful when generating links that work correctly within the Wippy environment.
+
+```typescript
+const absoluteUrl = host.formatUrl('/api/downloads/file.pdf')
+// Returns: https://app.wippy.ai/api/downloads/file.pdf
+```
+
+### logout
+
+```typescript
+host.logout(): void
+```
+
+Logs the user out and ends their session.
+
+---
+
+## api Object
+
+The `api` object is an axios instance pre-configured with:
+- Base URL from environment
+- Content-Type header
+- Automatic token injection for authenticated requests
+
+```typescript
+// GET request
+const response = await api.get('/api/users')
+
+// POST request with data
+const result = await api.post('/api/users', {
+  name: 'John',
+  email: 'john@example.com'
+})
+```
+
+---
+
+## on() Events
+
+The `on` function subscribes to events from the host application and WebSocket layer.
+
+### @history
+
+Emitted when the host URL changes (SPA navigation).
+
+```typescript
+on('@history', ({ path }) => {
+  console.log('Host URL changed:', path)
+  // Update internal router if needed
+})
+```
+
+### @visibility
+
+Emitted when iframe visibility changes (tab switch, hide/show). The host watches a visibility ref and sends visibility update messages.
+
+```typescript
+on('@visibility', (visible: boolean) => {
+  if (visible) {
+    console.log('Page is now visible')
+    // Resume animations, refresh data, restart polling
+  } else {
+    console.log('Page is now hidden')
+    // Pause animations, stop polling, reduce resource usage
+  }
+})
+```
+
+### @message
+
+Subscribe to ALL WebSocket messages (wildcard). Internally subscribes to patterns: `*`, `*:*`, `*:*:*`, `*:*:*:*`
+
+```typescript
+on('@message', (message) => {
+  console.log('Received WebSocket message:', message)
+})
+```
+
+### Topic Patterns
+
+Colon-separated parts with `*` wildcard matching:
+
+- `session:*` matches `session:uuid-1`, `session:uuid-2`
+- `session:*:message:*` matches `session:uuid:message:msgId`
+- Pattern must have the **same number of parts** as the topic
+
+```typescript
+// Listen to all session updates
+on('session:*', (event) => {
+  console.log('Session update:', event)
+})
+
+// Listen to specific session messages
+on('session:abc-123:message:*', (event) => {
+  console.log('Message in session abc-123:', event)
+})
+
+// If topic parts contain ":" characters, encode them
+on('session:' + encodeURIComponent('id:with:colons') + ':message:*', (event) => {
+  console.log('Message event:', event)
+})
+```
+
+---
+
+## Helper Functions
+
+### hostCss namespace
+
+URLs to host-provided CSS (Vite `?url` imports). Use for reducing bundle size by leveraging host styles:
+
+```typescript
+import { hostCss } from '@wippy-fe/proxy'
+
+hostCss.fontCssUrl      // Google Fonts
+hostCss.themeConfigUrl  // Theme CSS variables
+hostCss.primeVueCssUrl  // PrimeVue styles
+hostCss.markdownCssUrl  // Markdown content styles
+hostCss.iframeCssUrl    // Iframe sandbox styles
+```
+
+### loadCss(url)
+
+```typescript
+loadCss(url: string): Promise<string>
+```
+
+Fetches CSS content via authenticated API. Returns raw CSS string. Useful for embedding styles in Shadow DOM:
+
+```typescript
+import { hostCss, loadCss } from '@wippy-fe/proxy'
+
+const css = await loadCss(hostCss.primeVueCssUrl)
+shadowRoot.innerHTML = `<style>${css}</style>` + shadowRoot.innerHTML
+```
+
+### loadWebComponent(componentId, tagName?)
+
+```typescript
+loadWebComponent(componentId: string, tagName?: string): Promise<void>
+```
+
+Dynamically loads another web component by artifact UUID:
+
+1. Fetches artifact metadata (must be `application/json`)
+2. Validates it's a Wippy ESM module (package.json with `specification: "wippy-component-1.0"`)
+3. Creates `<script type="module" src="...?declare-tag=tagName">`
+4. Component auto-registers via `define()`
+
+```typescript
+// Load and register a component
+await loadWebComponent('artifact-uuid-123', 'my-custom-chart')
+
+// Now you can use <my-custom-chart> in your HTML
+```
+
+### addIcons(addCollectionFn)
+
+Register custom Iconify icons from config:
+
+```typescript
+import { addCollection } from '@iconify/vue'
+import { addIcons } from '@wippy-fe/proxy'
+
+addIcons(addCollection)  // Adds wippy icons + custom icons from config
+```
+
+---
+
+## TypeScript
+
+For TypeScript support, install the types package:
+
+```json
+"devDependencies": {
+  "@wippy-fe/types-global-proxy": "^0.0.1"
+}
+```
+
+Derive types from the `$W` global:
+
+```typescript
+export type HostApi = Awaited<ReturnType<typeof window.$W.host>>
+export type ProxyApiInstance = Awaited<ReturnType<typeof window.$W.instance>>
+export type WippyConfig = Awaited<ReturnType<typeof window.$W.config>>
+```
+
+---
+
+## Deprecated (Do Not Use)
+
+The following are deprecated and should not be used in new code:
+
+- **`iframe` object** - 100% deprecated alias for `host`. Use `host` instead.
+- **`form` object** - Existed for form state management. Use direct API calls instead.
+- **`tailwindConfig`** - Only for runtime Tailwind CDN script (`<script src="https://cdn.tailwindcss.com">`), not for modern Vite builds with Tailwind as a dependency.
+
+---
+
+## Configuration
+
+The `config` object contains application configuration:
+
+```typescript
+interface AppConfig {
+  artifactId?: string        // Current artifact ID (if applicable)
+  path?: string              // Sub-path after page ID (e.g., /c/page-id/sub-path)
+  auth: AppAuthConfig        // Authentication details
+  feature?: AppFeatures      // App features (history mode, session type, etc.)
+  customization?: AppCustomization  // Custom CSS, i18n, icons
+}
+```
+
+For dynamic pages, if the URL is `/c/123/something/else?foo=1`:
+- Page ID: `123`
+- `config.path`: `/something/else?foo=1`
+
+---
+
+## Icon Guidelines
+
+Use Iconify with the tabler prefix:
+
+```html
+<script src="https://code.iconify.design/iconify-icon/2.3.0/iconify-icon.min.js"></script>
+<iconify-icon icon="tabler:user" width="24" height="24"></iconify-icon>
+```
+
+Or with `@iconify/vue`:
+
+```vue
+<script setup>
+import { Icon } from '@iconify/vue'
+</script>
+
+<template>
+  <Icon icon="tabler:user" width="24" height="24" />
+</template>
+```
+
+Common icons: `tabler:user`, `tabler:alert-circle`, `tabler:circle-check`, `tabler:loader`, `tabler:calendar`, `tabler:settings`, `tabler:plus`
+
+Browse all icons at [tabler-icons.io](https://tabler-icons.io/)
+
+---
+
+## `<w-artifact>` Web Component
+
+The proxy exposes a native Web Component called `<w-artifact>` that lets you embed pages or artifacts directly inside any dynamic page.
+
+### Basic Usage
+
+```html
+<!-- Render an artifact by UUID -->
+<w-artifact id="38fb..." type="artifact"></w-artifact>
+
+<!-- Render a page with auto-resize -->
+<w-artifact id="123e456..." type="page" auto-height></w-artifact>
+```
+
+### Attributes
+
+| Attribute     | Required | Values                    | Default    | Description                                              |
+| ------------- | -------- | ------------------------- | ---------- | -------------------------------------------------------- |
+| `id`          | Yes      | Artifact / Page UUID      | –          | Which content to load                                    |
+| `type`        | No       | `artifact` \| `page`      | `artifact` | Which REST endpoint to call                              |
+| `auto-height` | No       | _(boolean flag)_          | `false`    | Listen for `CmdBodySize` events and adjust height        |
+| `url`         | No       | Any URL                   | –          | Fetch content directly from URL, ignoring `id`/`type`    |
+| `sub-path`    | No       | Any path string           | –          | Overrides `config.path` for embedded content             |
+
+### Events
+
+| Event name | When it fires                           | `detail` payload                    |
+| ---------- | --------------------------------------- | ----------------------------------- |
+| `loading`  | Before remote content starts fetching   | –                                   |
+| `load`     | After iframe is inserted successfully   | –                                   |
+| `error`    | When fetch fails                        | Original error object               |
+| `size`     | When auto-height updates iframe size    | `{ width: number, height: number }` |
+
+```javascript
+document.querySelector('w-artifact')?.addEventListener('error', (e) => {
+  console.error('Failed to load artifact:', e.detail)
+})
+```
+
+### Styling via CSS
+
+`<w-artifact>` exposes its state to CSS:
+
+**Host `status` attribute** - always one of `loading`, `ready`, `error`:
+```css
+w-artifact[status="loading"] { opacity: 0.5; }
+w-artifact[status="error"]   { border: 1px solid red; }
+```
+
+**Shadow parts** - internal nodes are labelled:
+
+| Part name | Node                      |
+| --------- | ------------------------- |
+| `loader`  | The loading placeholder   |
+| `error`   | The error placeholder     |
+| `frame`   | The underlying `<iframe>` |
+
+```css
+w-artifact::part(loader) { font-size: 1rem; }
+w-artifact::part(frame)  { border: 0; }
+```
+
+### Behavior
+
+1. Fetches raw HTML using the proxy's authenticated `api` instance
+2. When `url` is provided, that value is used directly; otherwise:
+   - `type="page"` → `/api/public/pages/content/<id>`
+   - `type="artifact"` → `/api/artifact/<id>/content`
+3. HTML is rendered inside a sandboxed iframe (`sandbox="allow-same-origin allow-scripts allow-forms allow-popups"`)
+4. All iframe → host commands are bridged automatically
+5. If `sub-path` is supplied, its value is forwarded to the inner iframe as `config.path`
+6. Markdown and inline-interactive artifacts are **not** supported - only plain iframe renders

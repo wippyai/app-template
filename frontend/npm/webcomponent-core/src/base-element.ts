@@ -28,6 +28,7 @@ import type { WippyElementConfig } from './types.ts'
  */
 export abstract class WippyElement<Props = Record<string, unknown>> extends HTMLElement {
   private _internals!: ElementInternals
+  private _contentObserver: MutationObserver | null = null
 
   /**
    * Override to provide the component's configuration.
@@ -75,8 +76,8 @@ export abstract class WippyElement<Props = Record<string, unknown>> extends HTML
     try {
       const config = (this.constructor as typeof WippyElement).wippyConfig
 
-      // 1. Shadow DOM
-      const shadow = this.attachShadow({ mode: config.shadowMode ?? 'open' })
+      // 1. Shadow DOM (guard against reconnect — attachShadow throws if called twice)
+      const shadow = this.shadowRoot ?? this.attachShadow({ mode: config.shadowMode ?? 'open' })
 
       // 2. Early hook — customize shadow before CSS/container
       this.onInit(shadow)
@@ -109,8 +110,23 @@ export abstract class WippyElement<Props = Record<string, unknown>> extends HTML
       }
       const typedProps = props as Props
 
+      // 7b. Extract children content (if contentTemplate configured)
+      let initialContent: string | null = null
+      if (config.contentTemplate) {
+        initialContent = this._extractContent(config.contentTemplate)
+        this._contentObserver = new MutationObserver(() => {
+          const content = this._extractContent(config.contentTemplate!)
+          this.onContentChanged(content)
+        })
+        this._contentObserver.observe(this, {
+          childList: true,
+          characterData: true,
+          subtree: true,
+        })
+      }
+
       // 8. Framework mount
-      this.onMount(shadow, container, typedProps, errors)
+      this.onMount(shadow, container, typedProps, errors, initialContent)
 
       // 9. Ready
       this._internals.states.delete('loading')
@@ -133,6 +149,10 @@ export abstract class WippyElement<Props = Record<string, unknown>> extends HTML
   }
 
   disconnectedCallback(): void {
+    if (this._contentObserver) {
+      this._contentObserver.disconnect()
+      this._contentObserver = null
+    }
     this.onUnmount()
     this.emitEvent('unload')
     this._internals.states.clear()
@@ -159,6 +179,7 @@ export abstract class WippyElement<Props = Record<string, unknown>> extends HTML
     container: HTMLElement,
     initialProps: Props,
     initialErrors: string[],
+    initialContent?: string | null,
   ): void
 
   /** Called after internals state is set to ready, before the `load` event. */
@@ -174,6 +195,18 @@ export abstract class WippyElement<Props = Record<string, unknown>> extends HTML
 
   /** Called when observed attributes change. Override to update framework state. */
   protected onPropsChanged(_props: Props, _errors: string[]): void {}
+
+  /**
+   * Extract text from a child `<template data-type="...">` element.
+   * Uses `.content.textContent` since `<template>` stores content in a DocumentFragment.
+   */
+  private _extractContent(dataType: string): string | null {
+    const tpl = this.querySelector(`template[data-type="${dataType}"]`) as HTMLTemplateElement | null
+    return tpl?.content.textContent?.trim() ?? null
+  }
+
+  /** Called when child `<template>` content changes. Override to update framework state. */
+  protected onContentChanged(_content: string | null): void {}
 }
 
 export { define }

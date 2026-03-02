@@ -110,4 +110,22 @@ export interface WippyElementConfig<Props = Record<string, unknown>> {
   containerClasses?: string[]
   /** Additional attribute names to observe beyond those in the props schema. */
   extraObservedAttributes?: string[]
+  /**
+   * If set, reads text content from a child `<template data-type="...">` element.
+   * The value is the type to match, e.g. `'text/vnd.mermaid'`.
+   * Content is extracted once on mount and updated via MutationObserver.
+   * Props take priority over children content.
+   *
+   * Usage:
+   * ```html
+   * <example-mermaid>
+   *   <template data-type="text/vnd.mermaid">graph TD; A --> B</template>
+   * </example-mermaid>
+   * ```
+   *
+   * Uses `<template>` instead of `<script>` because Vue templates strip script tags.
+   * The native `<template>` element is inert (not rendered) and works in both
+   * raw HTML and Vue SFC templates.
+   */
+  contentTemplate?: string
 }

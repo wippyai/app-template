@@ -16,7 +16,9 @@ export async function createMainApp() {
   const axios = await window.$W.api()
   const instance = await window.$W.instance()
 
-  const startPath = config.path ?? ''
+  const initialPath = config.path
+    ? (config.path.startsWith('/') ? config.path : '/' + config.path)
+    : '/'
 
   if (config.customization?.icons) {
     addCollection({
@@ -34,7 +36,7 @@ export async function createMainApp() {
   app.provide(AXIOS_INSTANCE, axios)
   app.provide(WIPPY_INSTANCE, instance)
 
-  const router = createAppRouter(hostApi, instance.on, startPath)
+  const router = createAppRouter(hostApi, instance.on, initialPath)
   app.use(router)
 
   return app

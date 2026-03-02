@@ -4,8 +4,8 @@ export type { WippyVueElementConfig } from './vue-element.ts'
 
 // Providers: base symbols, composables, and createProviders utility
 export {
-  EVENT_PROVIDER, PROPS_PROVIDER, PROPS_ERROR_PROVIDER,
-  useProps, useEvents, usePropsErrors,
+  EVENT_PROVIDER, PROPS_PROVIDER, PROPS_ERROR_PROVIDER, CONTENT_PROVIDER,
+  useProps, useEvents, usePropsErrors, useContent,
   createProviders,
 } from './providers.ts'
 export type { TypedProviders } from './providers.ts'

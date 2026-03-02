@@ -14,6 +14,9 @@ export const PROPS_PROVIDER = Symbol('wippy:props') as InjectionKey<Ref<Record<s
 /** Injection key for the reactive props error ref. */
 export const PROPS_ERROR_PROVIDER = Symbol('wippy:props_error') as InjectionKey<Ref<string[]>>
 
+/** Injection key for reactive content from child <template data-type="..."> elements. */
+export const CONTENT_PROVIDER = Symbol('wippy:content') as InjectionKey<Ref<string | null>>
+
 // ── Composables (typed) ──────────────────────────────────────
 
 /**
@@ -63,6 +66,23 @@ export function usePropsErrors(): Ref<string[]> {
   const errors = inject(PROPS_ERROR_PROVIDER)
   if (!errors) throw new Error('usePropsErrors() must be called inside a WippyVueElement')
   return errors
+}
+
+/**
+ * Inject the reactive content ref (from child `<template data-type="...">` elements).
+ *
+ * Must be called inside a Vue component's `setup()` within a `WippyVueElement`
+ * that has `contentTemplate` configured.
+ *
+ * ```ts
+ * const content = useContent()
+ * // content is Ref<string | null>
+ * ```
+ */
+export function useContent(): Ref<string | null> {
+  const content = inject(CONTENT_PROVIDER)
+  if (!content) throw new Error('useContent() must be called inside a WippyVueElement with contentTemplate configured')
+  return content
 }
 
 // ── createProviders (typed injection keys) ───────────────────

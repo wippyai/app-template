@@ -1,0 +1,125 @@
+/* Primary and Surface Palettes */
+:root {
+    --p-primary: rgb(0, 95, 178);
+
+    /* Using color-mix to create a numbered variable system */
+    --p-primary-50: color-mix(in srgb, var(--p-primary) 5%, white);  /* #f2f5fa */
+    --p-primary-100: color-mix(in srgb, var(--p-primary) 10%, white);  /* #e6ebf5 */
+    --p-primary-200: color-mix(in srgb, var(--p-primary) 20%, white);  /* #ccd6eb */
+    --p-primary-300: color-mix(in srgb, var(--p-primary) 30%, white);  /* #b3c2e0 */
+    --p-primary-400: color-mix(in srgb, var(--p-primary) 40%, white);  /* #99add6 */
+    --p-primary-500: var(--p-primary);  /* #005fb2 */
+    --p-primary-600: color-mix(in srgb, var(--p-primary) 80%, black);  /* #004c8e */
+    --p-primary-700: color-mix(in srgb, var(--p-primary) 70%, black);  /* #00427c */
+    --p-primary-800: color-mix(in srgb, var(--p-primary) 60%, black);  /* #00386a */
+    --p-primary-900: color-mix(in srgb, var(--p-primary) 50%, black);  /* #002f59 */
+    --p-primary-950: color-mix(in srgb, var(--p-primary) 40%, black);  /* #002647 */
+
+    /* Define secondary base color */
+    --p-secondary: #6f7385;
+
+    /* Create secondary color scale using color-mix */
+    --p-secondary-50: color-mix(in srgb, var(--p-secondary) 5%, white);  /* #f7f7f8 */
+    --p-secondary-100: color-mix(in srgb, var(--p-secondary) 10%, white);  /* #ededf1 */
+    --p-secondary-200: color-mix(in srgb, var(--p-secondary) 20%, white);  /* #d8d9df */
+    --p-secondary-300: color-mix(in srgb, var(--p-secondary) 35%, white);  /* #b6b8c3 */
+    --p-secondary-400: color-mix(in srgb, var(--p-secondary) 65%, white);  /* #8e92a2 */
+    --p-secondary-500: var(--p-secondary);  /* #6f7385 */
+    --p-secondary-600: color-mix(in srgb, var(--p-secondary) 80%, black);  /* #5a5d6f */
+    --p-secondary-700: color-mix(in srgb, var(--p-secondary) 65%, black);  /* #4a4c5a */
+    --p-secondary-800: color-mix(in srgb, var(--p-secondary) 55%, black);  /* #40424c */
+    --p-secondary-900: color-mix(in srgb, var(--p-secondary) 50%, black);  /* #383942 */
+    --p-secondary-950: color-mix(in srgb, var(--p-secondary) 30%, black);  /* #25252c */
+    --p-surface-0: #fff;
+    --p-surface-50: #fafafa;
+    --p-surface-100: #f4f4f5;
+    --p-surface-200: #e4e4e7;
+    --p-surface-300: #d4d4d8;
+    --p-surface-400: #a1a1aa;
+    --p-surface-500: #71717a;
+    --p-surface-600: #52525b;
+    --p-surface-700: #3f3f46;
+    --p-surface-800: #27272a;
+    --p-surface-900: #18181b;
+    --p-surface-950: #09090b;
+    --p-content-border-radius: 6px;
+}
+
+/* Light */
+:root {
+    --p-primary-color: var(--p-primary-500);
+    --p-primary-contrast-color: var(--p-surface-0);
+    --p-primary-hover-color: var(--p-primary-600);
+    --p-primary-active-color: var(--p-primary-700);
+    --p-content-border-color: var(--p-surface-200);
+    --p-content-hover-background: var(--p-surface-100);
+    --p-content-hover-color: var(--p-surface-800);
+    --p-highlight-background: var(--p-primary-50);
+    --p-highlight-color: var(--p-primary-700);
+    --p-highlight-focus-background: var(--p-primary-100);
+    --p-highlight-focus-color: var(--p-primary-800);
+    --p-text-color: var(--p-surface-700);
+    --p-text-hover-color: var(--p-surface-800);
+    --p-text-muted-color: var(--p-surface-500);
+    --p-text-hover-muted-color: var(--p-surface-600);
+    --p-content-background: var(--p-surface-0);
+}
+
+/*
+ * Dark Mode
+ * Defaults to system, change the selector to match the darkMode in tailwind.config.
+ * For example;
+ * darkMode: ['selector', '[class*="app-dark"]']
+ * should be;
+ * :root[class="app-dark"] {
+*/
+@media (prefers-color-scheme: dark) {
+    :root {
+
+        --p-surface-0: #fff;
+        --p-surface-50: #fafafa;
+        --p-surface-100: #f4f4f5;
+        --p-surface-200: #e4e4e7;
+        --p-surface-300: #d4d4d8;
+        --p-surface-400: #a1a1aa;
+        --p-surface-500: #71717a;
+        --p-surface-600: #545250; /* Less colorful warm tone */
+        --p-surface-700: #403e3c; /* Less colorful warm tone */
+        --p-surface-800: #2b2927; /* Less colorful warm tone */
+        --p-surface-900: #1c1a19; /* Less colorful warm tone */
+        --p-surface-950: #0f0e0d; /* Less colorful warm tone */
+
+        --p-primary: rgb(0, 125, 178);
+
+        /* Using color-mix to create a numbered variable system */
+        --p-primary-50: color-mix(in srgb, var(--p-primary) 5%, white);  /* #f2f5fa */
+        --p-primary-100: color-mix(in srgb, var(--p-primary) 10%, white);  /* #e6ebf5 */
+        --p-primary-200: color-mix(in srgb, var(--p-primary) 20%, white);  /* #ccd6eb */
+        --p-primary-300: color-mix(in srgb, var(--p-primary) 30%, white);  /* #b3c2e0 */
+        --p-primary-400: color-mix(in srgb, var(--p-primary) 40%, white);  /* #99add6 */
+        --p-primary-500: var(--p-primary);  /* #005fb2 */
+        --p-primary-600: color-mix(in srgb, var(--p-primary) 80%, black);  /* #004c8e */
+        --p-primary-700: color-mix(in srgb, var(--p-primary) 70%, black);  /* #00427c */
+        --p-primary-800: color-mix(in srgb, var(--p-primary) 60%, black);  /* #00386a */
+        --p-primary-900: color-mix(in srgb, var(--p-primary) 50%, black);  /* #002f59 */
+        --p-primary-950: color-mix(in srgb, var(--p-primary) 40%, black);  /* #002647 */
+
+
+        --p-primary-color: var(--p-primary-400);
+        --p-primary-contrast-color: var(--p-surface-900);
+        --p-primary-hover-color: var(--p-primary-300);
+        --p-primary-active-color: var(--p-primary-200);
+        --p-content-border-color: var(--p-surface-700);
+        --p-content-hover-background: var(--p-surface-800);
+        --p-content-hover-color: var(--p-surface-0);
+        --p-highlight-background: color-mix(in srgb, var(--p-primary-400), transparent 84%);
+        --p-highlight-color: rgba(255, 255, 255, 87%);
+        --p-highlight-focus-background: color-mix(in srgb, var(--p-primary-400), transparent 76%);
+        --p-highlight-focus-color: rgba(255, 255, 255, 87%);
+        --p-text-color: var(--p-surface-0);
+        --p-text-hover-color: var(--p-surface-0);
+        --p-text-muted-color: var(--p-surface-400);
+        --p-text-hover-muted-color: var(--p-surface-300);
+        --p-content-background: var(--p-surface-900);
+    }
+}

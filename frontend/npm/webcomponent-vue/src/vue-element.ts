@@ -2,7 +2,7 @@ import type { App, Component, Ref } from 'vue'
 import { WippyElement } from '@wippy-fe/webcomponent-core'
 import { createPinia } from 'pinia'
 import { createApp, ref } from 'vue'
-import { EVENT_PROVIDER, PROPS_PROVIDER, PROPS_ERROR_PROVIDER } from './providers.ts'
+import { EVENT_PROVIDER, PROPS_PROVIDER, PROPS_ERROR_PROVIDER, CONTENT_PROVIDER } from './providers.ts'
 
 /**
  * Vue-specific configuration returned by `static get vueConfig()`.
@@ -49,6 +49,7 @@ export abstract class WippyVueElement<
   private _vueApp: App<Element> | null = null
   private _propsRef: Ref<Props> = ref({}) as Ref<Props>
   private _errorsRef: Ref<string[]> = ref([])
+  private _contentRef: Ref<string | null> = ref(null)
 
   /** @internal Phantom field to retain the Events type parameter. */
   declare readonly _events: Events
@@ -65,12 +66,14 @@ export abstract class WippyVueElement<
     container: HTMLElement,
     initialProps: Props,
     initialErrors: string[],
+    initialContent?: string | null,
   ): void {
     const vueConfig = (this.constructor as typeof WippyVueElement).vueConfig
 
     // 1. Set reactive state
     this._propsRef.value = initialProps
     this._errorsRef.value = initialErrors
+    this._contentRef.value = initialContent ?? null
 
     // Emit initial errors as invalid events
     for (const error of initialErrors) {
@@ -92,6 +95,7 @@ export abstract class WippyVueElement<
     this._vueApp.provide(PROPS_PROVIDER, this._propsRef as Ref<Record<string, unknown>>)
     this._vueApp.provide(PROPS_ERROR_PROVIDER, this._errorsRef)
     this._vueApp.provide(EVENT_PROVIDER, this.emitEvent.bind(this))
+    this._vueApp.provide(CONTENT_PROVIDER, this._contentRef)
 
     // 5. Custom providers
     if (vueConfig.providers) {
@@ -116,5 +120,9 @@ export abstract class WippyVueElement<
     for (const error of errors) {
       this.emitEvent('invalid', { message: error })
     }
+  }
+
+  protected onContentChanged(content: string | null): void {
+    this._contentRef.value = content
   }
 }

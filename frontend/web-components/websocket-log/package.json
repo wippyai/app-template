@@ -1,0 +1,70 @@
+{
+  "name": "@example/websocket-log",
+  "version": "1.0.0",
+  "specification": "wippy-component-1.0",
+  "title": "WebSocket Log",
+  "description": "A terminal-style log viewer demonstrating WebSocket subscriptions via on() from the proxy.",
+  "browser": "dist/index.js",
+  "files": [
+    "dist/",
+    "src/",
+    "package.json"
+  ],
+  "dependencies": {
+    "@wippy-fe/webcomponent-core": "file:../../npm/webcomponent-core",
+    "@wippy-fe/webcomponent-vue": "file:../../npm/webcomponent-vue"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "@vitejs/plugin-vue": "^5.0.0",
+    "@wippy-fe/proxy": "^0.0.3",
+    "eslint": "^8.57.0",
+    "eslint-plugin-vue": "^9.0.0",
+    "typescript": "^5.0.0",
+    "vite": "^6.0.0",
+    "vue": "^3.5.0",
+    "vue-eslint-parser": "^9.4.3",
+    "vue-tsc": "^2.0.0"
+  },
+  "peerDependencies": {
+    "@wippy-fe/proxy": "^0.0.3",
+    "vue": "^3.5.0"
+  },
+  "wippy": {
+    "tagName": "example-websocket-log",
+    "type": "widget",
+    "props": {
+      "type": "object",
+      "properties": {
+        "topics": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "@message"
+          ],
+          "description": "Array of WebSocket topics to subscribe to"
+        },
+        "max-entries": {
+          "type": "number",
+          "default": 100,
+          "description": "Maximum number of log entries to keep"
+        }
+      }
+    },
+    "scripts": {
+      "build": "build",
+      "debug": "build:debug",
+      "test": "lint"
+    }
+  },
+  "scripts": {
+    "build": "vite build",
+    "build:debug": "vite build --mode development",
+    "dev": "vite build --watch",
+    "lint": "eslint src --ext .ts,.vue",
+    "lint:fix": "eslint src --ext .ts,.vue --fix"
+  }
+}

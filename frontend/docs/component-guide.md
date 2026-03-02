@@ -1,0 +1,842 @@
+# Prompt for Building Wippy Web Components
+
+> **CRITICAL: NOT STANDALONE**
+>
+> Wippy web components do **NOT** work outside the Wippy host application. They run within Wippy pages with host-injected configuration. The `@wippy-fe/proxy` module and host APIs only exist when loaded within Wippy.
+
+## Task
+
+Create a Wippy web component using the `WippyVueElement` base class with Vue 3, Shadow DOM encapsulation, and typed props/events. The base classes handle all boilerplate (shadow root, CSS loading, prop parsing, Vue app mounting, reactive injection). You write the Vue component and configuration.
+
+## Architecture Overview
+
+The system uses a two-layer base class hierarchy:
+
+1. **`WippyElement`** (`@wippy-fe/webcomponent-core`) -- Raw custom element base class. Handles:
+   - Shadow DOM creation (`open` or `closed`)
+   - Host CSS loading from `@wippy-fe/proxy` (fonts, theme, PrimeVue, etc.)
+   - Inline CSS injection (your component's own styles)
+   - JSON-schema-based prop parsing from HTML attributes (type coercion, defaults, validation)
+   - `<template data-type="...">` children content extraction via MutationObserver
+   - `ElementInternals` state management (`loading`, `ready`, `error`)
+   - Lifecycle event emission (`load`, `unload`, `error`, `invalid`)
+
+2. **`WippyVueElement`** (`@wippy-fe/webcomponent-vue`) -- Extends `WippyElement`. Adds:
+   - Vue 3 app creation and mounting into the shadow root
+   - Reactive prop injection via `useProps<T>()`
+   - Typed event emission via `useEvents<T>()`
+   - Prop validation error injection via `usePropsErrors()`
+   - Children content injection via `useContent()`
+   - Plugin registration (PrimeVue, Pinia, etc.)
+
+**You never touch Shadow DOM, CSS loading, or prop parsing directly.** You declare configuration via two static getters (`wippyConfig` and `vueConfig`) and write a normal Vue SFC.
+
+## File Structure
+
+```
+my-widget/
+├── package.json
+├── vite.config.ts
+├── tsconfig.json
+├── tsconfig.node.json
+├── .eslintrc.cjs
+├── postcss.config.js          # Only if using Tailwind
+├── tailwind.config.ts          # Only if using Tailwind
+└── src/
+    ├── index.ts                # WippyVueElement subclass + define()
+    ├── types.ts                # ComponentProps interface
+    ├── constants.ts            # Events interface + typed composables
+    ├── styles.css              # Component styles (imports theme-config.css)
+    ├── theme-config.css        # Dev-time fallback theme variables
+    ├── tailwind.css            # Only if using Tailwind (@tailwind directives)
+    └── app/
+        └── my-widget.vue       # Main Vue component
+```
+
+## Complete Working Skeleton
+
+### Variant A: Minimal (no Tailwind, no PrimeVue)
+
+Use this for components that only need theme variables and custom CSS (like `websocket-log`, `mermaid`, `chart-circle`).
+
+#### package.json
+
+```json
+{
+  "name": "@example/my-widget",
+  "version": "1.0.0",
+  "specification": "wippy-component-1.0",
+  "title": "My Widget",
+  "description": "Description of what the widget does",
+  "browser": "dist/index.js",
+  "files": ["dist/", "src/", "package.json"],
+  "dependencies": {
+    "@wippy-fe/webcomponent-core": "file:../../npm/webcomponent-core",
+    "@wippy-fe/webcomponent-vue": "file:../../npm/webcomponent-vue"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "@vitejs/plugin-vue": "^5.0.0",
+    "@wippy-fe/proxy": "^0.0.3",
+    "eslint": "^8.57.0",
+    "eslint-plugin-vue": "^9.0.0",
+    "typescript": "^5.0.0",
+    "vite": "^6.0.0",
+    "vue": "^3.5.0",
+    "vue-eslint-parser": "^9.4.3",
+    "vue-tsc": "^2.0.0"
+  },
+  "peerDependencies": {
+    "@wippy-fe/proxy": "^0.0.3",
+    "vue": "^3.5.0"
+  },
+  "wippy": {
+    "tagName": "example-my-widget",
+    "type": "widget",
+    "props": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "default": "Hello",
+          "description": "Widget title"
+        },
+        "max-items": {
+          "type": "number",
+          "default": 10,
+          "description": "Maximum number of items to display"
+        }
+      }
+    },
+    "scripts": {
+      "build": "build",
+      "debug": "build:debug",
+      "test": "lint"
+    }
+  },
+  "scripts": {
+    "build": "vite build",
+    "build:debug": "vite build --mode development",
+    "dev": "vite build --watch",
+    "lint": "eslint src --ext .ts,.vue",
+    "lint:fix": "eslint src --ext .ts,.vue --fix"
+  }
+}
+```
+
+#### vite.config.ts
+
+```typescript
+import { resolve } from 'node:path'
+import vue from '@vitejs/plugin-vue'
+import { defineConfig } from 'vite'
+
+export default defineConfig({
+  plugins: [vue()],
+  resolve: {
+    alias: {
+      '@wippy-fe/webcomponent-core': resolve(__dirname, '../../npm/webcomponent-core/src'),
+      '@wippy-fe/webcomponent-vue': resolve(__dirname, '../../npm/webcomponent-vue/src'),
+    },
+  },
+  build: {
+    target: 'esnext',
+    lib: {
+      entry: resolve(__dirname, 'src/index.ts'),
+      name: 'MyWidget',
+      fileName: 'index',
+      formats: ['es'],
+    },
+    rollupOptions: {
+      input: {
+        index: resolve(__dirname, 'src/index.ts'),
+      },
+      external: [
+        'vue',
+        'pinia',
+        '@iconify/vue',
+        '@wippy-fe/proxy',
+      ],
+      output: {
+        entryFileNames: '[name].js',
+        chunkFileNames: '[name]-[hash].js',
+        assetFileNames: '[name]-[hash][extname]',
+      },
+    },
+    sourcemap: true,
+  },
+})
+```
+
+#### tsconfig.json
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "preserve",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "types": ["vite/client", "@wippy-fe/proxy"],
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "paths": {
+      "@wippy-fe/webcomponent-core": ["../../npm/webcomponent-core/src"],
+      "@wippy-fe/webcomponent-core/*": ["../../npm/webcomponent-core/src/*"],
+      "@wippy-fe/webcomponent-vue": ["../../npm/webcomponent-vue/src"],
+      "@wippy-fe/webcomponent-vue/*": ["../../npm/webcomponent-vue/src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.vue"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}
+```
+
+#### tsconfig.node.json
+
+```json
+{
+  "compilerOptions": {
+    "composite": true,
+    "skipLibCheck": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "strict": true
+  },
+  "include": ["vite.config.ts"]
+}
+```
+
+#### .eslintrc.cjs
+
+```javascript
+/** @type {import('eslint').Linter.Config} */
+module.exports = {
+  root: true,
+  parser: 'vue-eslint-parser',
+  parserOptions: {
+    parser: '@typescript-eslint/parser',
+    ecmaVersion: 'latest',
+    sourceType: 'module',
+  },
+  plugins: ['@typescript-eslint'],
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/strict',
+    'plugin:vue/vue3-recommended',
+  ],
+  rules: {
+    '@typescript-eslint/no-explicit-any': 'warn',
+    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+    '@typescript-eslint/no-non-null-assertion': 'warn',
+    '@typescript-eslint/consistent-type-imports': ['error', { prefer: 'type-imports' }],
+    '@typescript-eslint/no-empty-function': 'off',
+    '@typescript-eslint/no-extraneous-class': 'off',
+    '@typescript-eslint/no-invalid-void-type': 'off',
+    'vue/multi-word-component-names': 'off',
+    'vue/no-v-html': 'off',
+    'no-console': ['warn', { allow: ['warn', 'error'] }],
+    'eqeqeq': 'error',
+    'no-var': 'error',
+    'prefer-const': 'error',
+  },
+  env: {
+    browser: true,
+    es2020: true,
+  },
+}
+```
+
+#### src/types.ts
+
+```typescript
+export interface ComponentProps {
+  title?: string
+  maxItems?: number
+}
+```
+
+#### src/constants.ts
+
+```typescript
+import { useProps, useEvents, usePropsErrors } from '@wippy-fe/webcomponent-vue'
+import type { ComponentProps } from './types.ts'
+
+export interface Events {
+  load: undefined
+  unload: undefined
+  error: { message: string, error: unknown }
+  invalid: { message: string }
+}
+
+export const useComponentProps = () => useProps<ComponentProps>()
+export const useComponentEvents = () => useEvents<Events>()
+export const useComponentPropsErrors = usePropsErrors
+```
+
+#### src/index.ts
+
+```typescript
+import { WippyVueElement, define } from '@wippy-fe/webcomponent-vue'
+import type { WippyElementConfig, WippyPropsSchema } from '@wippy-fe/webcomponent-vue'
+import type { ComponentProps } from './types.ts'
+import type { Events } from './constants.ts'
+import MyWidget from './app/my-widget.vue'
+import stylesText from './styles.css?inline'
+import pkg from '../package.json'
+
+class MyWidgetElement extends WippyVueElement<ComponentProps, Events> {
+  static get wippyConfig(): WippyElementConfig<ComponentProps> {
+    return {
+      propsSchema: pkg.wippy.props as WippyPropsSchema,
+      hostCssKeys: ['fontCssUrl', 'themeConfigUrl'] as const,
+      inlineCss: stylesText,
+    }
+  }
+
+  static get vueConfig() {
+    return {
+      rootComponent: MyWidget,
+    }
+  }
+}
+
+export async function webComponent() {
+  return MyWidgetElement
+}
+
+define(import.meta.url, MyWidgetElement)
+```
+
+#### src/styles.css
+
+```css
+@import "theme-config.css";
+
+.my-widget {
+  font-family: inherit;
+  color: var(--p-text-color);
+  background: var(--p-content-background);
+  width: 100%;
+  height: 100%;
+}
+
+.my-widget .header {
+  padding: 8px 12px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--p-content-border-color, #e5e7eb);
+}
+
+.my-widget .content {
+  padding: 8px 12px;
+  color: var(--p-text-muted-color, #999);
+}
+```
+
+#### src/theme-config.css
+
+This file provides fallback CSS variables for local development. At runtime, the host injects the real theme via `hostCssKeys: ['themeConfigUrl']`. Copy this from any existing component (e.g., `reaction-bar/src/theme-config.css`). It defines `--p-primary-*`, `--p-surface-*`, `--p-text-color`, `--p-content-background`, etc., with light and dark mode variants.
+
+#### src/app/my-widget.vue
+
+```vue
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useComponentProps } from '../constants'
+
+const props = useComponentProps()
+
+const title = computed(() => props.value.title ?? 'Hello')
+const maxItems = computed(() => props.value.maxItems ?? 10)
+</script>
+
+<template>
+  <div class="my-widget">
+    <div class="header">
+      {{ title }}
+    </div>
+    <div class="content">
+      Displaying up to {{ maxItems }} items
+    </div>
+  </div>
+</template>
+```
+
+---
+
+### Variant B: With Tailwind + PrimeVue
+
+Use this for components that need Tailwind utility classes and PrimeVue UI components (like `reaction-bar`, `model-gallery`). Adds `tailwind.config.ts`, `postcss.config.js`, `tailwind.css`, PrimeVue in dependencies, and the PrimeVue plugin in `vueConfig`.
+
+Only the files that **differ** from Variant A are shown.
+
+#### package.json (differences)
+
+```json
+{
+  "dependencies": {
+    "@wippy-fe/webcomponent-core": "file:../../npm/webcomponent-core",
+    "@wippy-fe/webcomponent-vue": "file:../../npm/webcomponent-vue",
+    "primevue": "^4.3.3"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "@vitejs/plugin-vue": "^5.0.0",
+    "@wippy-fe/proxy": "^0.0.3",
+    "autoprefixer": "^10.4.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-vue": "^9.0.0",
+    "postcss": "^8.4.0",
+    "tailwindcss": "3",
+    "tailwindcss-primeui": "^0.6.1",
+    "typescript": "^5.0.0",
+    "vite": "^6.0.0",
+    "vue": "^3.5.0",
+    "vue-eslint-parser": "^9.4.3",
+    "vue-tsc": "^2.0.0"
+  },
+  "peerDependencies": {
+    "@wippy-fe/proxy": "^0.0.3",
+    "vue": "^3.5.0"
+  }
+}
+```
+
+Key additions: `primevue` in dependencies; `autoprefixer`, `postcss`, `tailwindcss`, `tailwindcss-primeui` in devDependencies.
+
+#### tailwind.config.ts
+
+```typescript
+import PrimeUI from 'tailwindcss-primeui'
+
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ['./index.html', './src/**/*.{vue,ts}'],
+  theme: {
+    extend: {
+      colors: {
+        secondary: {
+          50: 'var(--p-secondary-50)',
+          100: 'var(--p-secondary-100)',
+          200: 'var(--p-secondary-200)',
+          300: 'var(--p-secondary-300)',
+          400: 'var(--p-secondary-400)',
+          500: 'var(--p-secondary-500)',
+          600: 'var(--p-secondary-600)',
+          700: 'var(--p-secondary-700)',
+          800: 'var(--p-secondary-800)',
+          900: 'var(--p-secondary-900)',
+          950: 'var(--p-secondary-950)',
+        },
+      },
+    },
+  },
+  plugins: [PrimeUI],
+}
+```
+
+#### postcss.config.js
+
+```javascript
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+```
+
+#### src/tailwind.css
+
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+```
+
+#### src/styles.css
+
+```css
+@import "theme-config.css";
+@import 'tailwind.css';
+```
+
+#### src/index.ts
+
+```typescript
+import { WippyVueElement, define } from '@wippy-fe/webcomponent-vue'
+import type { WippyElementConfig, WippyPropsSchema } from '@wippy-fe/webcomponent-vue'
+import type { App } from 'vue'
+import PrimeVue from 'primevue/config'
+import type { ComponentProps } from './types.ts'
+import type { Events } from './constants.ts'
+import MyWidget from './app/my-widget.vue'
+import stylesText from './styles.css?inline'
+import pkg from '../package.json'
+
+class MyWidgetElement extends WippyVueElement<ComponentProps, Events> {
+  static get wippyConfig(): WippyElementConfig<ComponentProps> {
+    return {
+      propsSchema: pkg.wippy.props as WippyPropsSchema,
+      hostCssKeys: ['fontCssUrl', 'themeConfigUrl', 'primeVueCssUrl'] as const,
+      inlineCss: stylesText,
+    }
+  }
+
+  static get vueConfig() {
+    return {
+      rootComponent: MyWidget,
+      plugins: [
+        { install: (app: App) => app.use(PrimeVue, { theme: 'none' }) },
+      ],
+    }
+  }
+}
+
+export async function webComponent() {
+  return MyWidgetElement
+}
+
+define(import.meta.url, MyWidgetElement)
+```
+
+Key differences from Variant A:
+- `hostCssKeys` includes `'primeVueCssUrl'`
+- `vueConfig` includes the PrimeVue plugin with `{ theme: 'none' }` (host provides theme)
+- `styles.css` imports `tailwind.css`
+
+#### src/app/my-widget.vue (using Tailwind + PrimeVue)
+
+```vue
+<script setup lang="ts">
+import { computed } from 'vue'
+import Button from 'primevue/button'
+import { useComponentProps, useComponentEvents } from '../constants'
+
+const props = useComponentProps()
+const emit = useComponentEvents()
+
+const title = computed(() => props.value.title ?? 'Hello')
+
+function handleClick() {
+  emit('some-event', { title: title.value })
+}
+</script>
+
+<template>
+  <div class="flex flex-col gap-2 p-3">
+    <h2 class="text-lg font-semibold text-surface-800">
+      {{ title }}
+    </h2>
+    <Button
+      label="Click me"
+      severity="secondary"
+      size="small"
+      @click="handleClick"
+    />
+  </div>
+</template>
+```
+
+---
+
+## hostCssKeys Reference
+
+Keys passed to `hostCssKeys` in `wippyConfig` control which platform CSS is loaded into the shadow root at runtime. Each key maps to a URL provided by `@wippy-fe/proxy`.
+
+| Key | What it loads | When to include |
+|-----|---------------|-----------------|
+| `fontCssUrl` | Platform font definitions (families, weights) | Almost always -- ensures consistent typography with host |
+| `themeConfigUrl` | CSS custom properties (`--p-primary-*`, `--p-surface-*`, `--p-text-color`, `--p-content-background`, etc.) | **Always** -- required for theme integration and dark mode |
+| `primeVueCssUrl` | PrimeVue component classes (unstyled mode, matches host appearance) | When using any PrimeVue components (`Button`, `InputText`, `DataTable`, etc.) |
+| `markdownCssUrl` | Styles for rendered markdown blocks | Only if rendering markdown content |
+| `iframeCssUrl` | Scrollbar styling, iframe-related layout | Recommended for all components so scrollbars match the host |
+
+**Common combinations:**
+
+- Minimal (custom CSS only): `['fontCssUrl', 'themeConfigUrl']`
+- With PrimeVue: `['fontCssUrl', 'themeConfigUrl', 'primeVueCssUrl']`
+- Markdown renderer: `['fontCssUrl', 'themeConfigUrl', 'markdownCssUrl']`
+- Pass `[]` to skip host CSS entirely (fully self-styled component)
+
+---
+
+## Children Content
+
+Some components accept content from child `<template>` elements instead of (or in addition to) props. This is useful when the content is large or multi-line (e.g., a Mermaid diagram definition, markdown text).
+
+### Configuration
+
+Set `contentTemplate` in `wippyConfig` to the MIME type to match:
+
+```typescript
+static get wippyConfig(): WippyElementConfig<ComponentProps> {
+  return {
+    propsSchema: pkg.wippy.props as WippyPropsSchema,
+    hostCssKeys: ['fontCssUrl', 'themeConfigUrl'] as const,
+    inlineCss: stylesText,
+    contentTemplate: 'text/vnd.mermaid',
+  }
+}
+```
+
+### HTML usage
+
+```html
+<example-mermaid>
+  <template data-type="text/vnd.mermaid">
+    graph TD
+      A[Start] --> B[End]
+  </template>
+</example-mermaid>
+```
+
+Uses `<template>` instead of `<script>` because Vue templates strip script tags. The native `<template>` element is inert (not rendered) and works in both raw HTML and Vue SFC templates.
+
+### Reading content in Vue
+
+```vue
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useContent } from '@wippy-fe/webcomponent-vue'
+import { useComponentProps } from '../constants'
+
+const props = useComponentProps()
+const content = useContent()
+
+// Props take priority over children content
+const definition = computed(() =>
+  props.value.definition || content.value || 'graph TD; A --> B'
+)
+</script>
+```
+
+Content is extracted once on mount and updated via MutationObserver when the child template changes.
+
+---
+
+## Proxy API Usage
+
+The `@wippy-fe/proxy` module provides `api`, `host`, and `on` for communicating with the Wippy host. Import them in your Vue components.
+
+See `node_modules/@wippy-fe/proxy/index.d.ts` for full type definitions.
+
+### API calls (fetch data from backend)
+
+```vue
+<script setup lang="ts">
+import { api, host } from '@wippy-fe/proxy'
+import { onMounted, ref } from 'vue'
+
+const data = ref(null)
+const loading = ref(true)
+
+onMounted(async () => {
+  await refreshData()
+})
+
+async function refreshData() {
+  try {
+    loading.value = true
+    const response = await api.get('/endpoint')
+    data.value = response.data
+  } catch (error) {
+    if (error.response?.status === 401) {
+      host.handleError('auth-expired', error)
+    } else {
+      host.handleError('other', error)
+      host.toast({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Failed to load data'
+      })
+    }
+  } finally {
+    loading.value = false
+  }
+}
+</script>
+```
+
+### WebSocket / real-time events
+
+```vue
+<script setup lang="ts">
+import { on } from '@wippy-fe/proxy'
+import { onMounted, onUnmounted, ref } from 'vue'
+
+const messages = ref<unknown[]>([])
+const unsubscribers: Array<() => void> = []
+
+onMounted(() => {
+  // Listen for messages on a specific topic
+  unsubscribers.push(
+    on('@message', (data: unknown) => {
+      messages.value.push(data)
+    })
+  )
+
+  // Listen for visibility changes (tab switch, iframe hide/show)
+  unsubscribers.push(
+    on('@visibility', (visible: boolean) => {
+      if (visible) refreshData()
+    })
+  )
+
+  // Listen for host URL changes
+  unsubscribers.push(
+    on('@history', ({ path }: { path: string }) => {
+      console.warn('Host URL changed:', path)
+    })
+  )
+})
+
+onUnmounted(() => {
+  unsubscribers.forEach(unsub => unsub())
+  unsubscribers.length = 0
+})
+</script>
+```
+
+### Host API methods
+
+```typescript
+import { host } from '@wippy-fe/proxy'
+
+host.startChat(token, { sidebar?: boolean })
+host.openSession(sessionUUID, { sidebar?: boolean })
+host.openArtifact(artifactUUID, { target: 'modal' | 'sidebar' })
+host.setContext(context, sessionUUID?, source?)
+host.navigate(url)
+host.confirm(options)        // Returns Promise<boolean>
+host.toast(options)          // { severity, summary, detail }
+host.handleError(code, error)
+host.formatUrl(relativeUrl)
+host.logout()
+```
+
+---
+
+## Styling Guidelines
+
+1. **Use semantic CSS variables** for all theme-dependent colors. These adapt to dark mode automatically:
+   - `--p-text-color`, `--p-text-muted-color` -- text
+   - `--p-content-background` -- backgrounds
+   - `--p-content-border-color` -- borders
+   - `--p-primary-500`, `--p-primary-color` -- accent/brand
+   - `--p-highlight-background`, `--p-highlight-color` -- selections
+
+2. **Never use raw surface values** like `--p-surface-0`, `--p-surface-200`, `--p-surface-700` for theme-dependent colors. They do not adapt to dark mode. Use the semantic aliases above.
+
+3. **Derived shades** via `color-mix()` instead of hardcoded surface values:
+   ```css
+   background: color-mix(in srgb, var(--p-content-background) 85%, var(--p-text-color) 15%);
+   ```
+
+4. **No root-level padding or margin** on components -- the host controls spacing.
+
+5. **theme-config.css** is a dev-time fallback. It defines all `--p-*` variables so your component renders correctly during local development. At runtime, the host injects the real theme via `hostCssKeys: ['themeConfigUrl']`. Copy this file from any existing component.
+
+6. **Tailwind components** import `tailwind.css` (which has the `@tailwind` directives) from `styles.css`. Both files are bundled via the `?inline` import in `index.ts`.
+
+7. **Non-Tailwind components** write plain CSS classes using the semantic `--p-*` variables. See `websocket-log/src/styles.css` for a complete example.
+
+---
+
+## ESLint Configuration
+
+Every component package includes its own `.eslintrc.cjs`. The configuration enforces strict TypeScript, Vue 3 recommended rules, and consistent type imports. See the `.eslintrc.cjs` in the skeleton above for the full config.
+
+Key rules:
+- `@typescript-eslint/consistent-type-imports` -- enforces `import type { ... }` for type-only imports
+- `@typescript-eslint/no-extraneous-class` -- disabled (needed for `WippyVueElement` subclasses)
+- `@typescript-eslint/no-invalid-void-type` -- disabled (needed for `Events` interface with `undefined` values)
+- `vue/multi-word-component-names` -- disabled
+- `no-console` -- warns except for `console.warn` and `console.error`
+
+---
+
+## Build
+
+Build a component with the `--outDir` flag to place output in the static directory:
+
+```bash
+cd frontend/web-components/my-widget && npm install && npm run build -- --outDir ../../../static/wc/my-widget --emptyOutDir
+```
+
+For development with watch mode:
+
+```bash
+cd frontend/web-components/my-widget && npm run dev
+```
+
+The `wippy.scripts` in `package.json` maps Wippy commands to npm scripts:
+- `"build": "build"` runs `npm run build` (production)
+- `"debug": "build:debug"` runs `npm run build:debug` (development mode with source maps)
+- `"test": "lint"` runs `npm run lint` (ESLint)
+
+---
+
+## Appendix: Raw Custom Element Pattern (Advanced)
+
+> This section covers building a component by extending `WippyElement` directly without Vue. Use this only if you have a specific reason to avoid Vue (e.g., wrapping a vanilla JS library that manages its own DOM).
+
+For raw custom elements, extend `WippyElement` from `@wippy-fe/webcomponent-core` and implement `connectedCallback` / `disconnectedCallback` yourself. You handle DOM creation, event emission, and prop changes manually.
+
+```typescript
+import { WippyElement, define } from '@wippy-fe/webcomponent-core'
+import type { WippyElementConfig, WippyPropsSchema } from '@wippy-fe/webcomponent-core'
+import pkg from '../package.json'
+
+interface MyProps {
+  label?: string
+}
+
+class MyRawElement extends WippyElement {
+  static get wippyConfig(): WippyElementConfig<MyProps> {
+    return {
+      propsSchema: pkg.wippy.props as WippyPropsSchema,
+      hostCssKeys: ['fontCssUrl', 'themeConfigUrl'] as const,
+      inlineCss: ':host { display: block; }',
+    }
+  }
+
+  connectedCallback() {
+    super.connectedCallback()
+    // Shadow root is already created by WippyElement.
+    // Host CSS and inline CSS are already injected.
+    // Access parsed props via this.currentProps.
+    const container = this.shadowRoot!.querySelector('[data-wippy-container]')
+    if (container) {
+      container.textContent = this.currentProps.label ?? 'Default'
+    }
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback()
+    // Clean up your DOM, event listeners, etc.
+  }
+}
+
+export async function webComponent() {
+  return MyRawElement
+}
+
+define(import.meta.url, MyRawElement)
+```
+
+This pattern still benefits from `WippyElement`'s automatic Shadow DOM setup, CSS loading, and prop parsing. You just skip the Vue layer. For most components, use `WippyVueElement` instead.
