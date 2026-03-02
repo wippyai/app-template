@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { computed, inject, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import PaginationControls from '../components/pagination-controls.vue'
 import ProcessingUploads from '../components/processing-uploads.vue'
 import UploadDropZone from '../components/upload-drop-zone.vue'
 import UploadsList from '../components/uploads-list.vue'
-import { EVENT_PROVIDER, PROPS_ERROR_PROVIDER, PROPS_PROVIDER, DEFAULT_COMPONENT_PROPS } from '../constants'
+import { useComponentProps, useComponentEvents, useComponentPropsErrors, DEFAULT_COMPONENT_PROPS } from '../constants'
 import Layout from '../layout/layout.vue'
 import { useUploadsStore } from '../stores/uploads'
 
-// Inject providers
-const props = inject(PROPS_PROVIDER)!
-const propsError = inject(PROPS_ERROR_PROVIDER)!
-const emit = inject(EVENT_PROVIDER)!
+// Typed composables — fully typed props, events, and errors
+const props = useComponentProps()
+const propsError = useComponentPropsErrors()
+const emit = useComponentEvents()
 
 // Store
 const store = useUploadsStore()

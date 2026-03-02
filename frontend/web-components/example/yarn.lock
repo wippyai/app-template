@@ -244,10 +244,20 @@
   resolved "https://registry.npmjs.org/@vue/shared/-/shared-3.5.29.tgz"
   integrity sha512-w7SR0A5zyRByL9XUkCfdLs7t9XOHUyJ67qPGQjOou3p6GvBeBW+AVjUUmlxtZ4PIYaRvE+1LmK44O4uajlZwcg==
 
-"@wippy-fe/proxy@^0.0.1":
-  version "0.0.1"
-  resolved "https://registry.npmjs.org/@wippy-fe/proxy/-/proxy-0.0.1.tgz"
-  integrity sha512-PtSPpX6/+1JxJuvk7x68F7B5w40nQNQ/qZBzEXl99+7RgHPUX/a+T55pZ4w8EtjqRMRBVjcV2+WRsB8zJ6XVsg==
+"@wippy-fe/proxy@^0.0.3":
+  version "0.0.3"
+  resolved "https://registry.npmjs.org/@wippy-fe/proxy/-/proxy-0.0.3.tgz"
+  integrity sha512-eL34mG0vtg0TbvUE335K6QZRqHxuuCF5J2l5nLvaTWxTvzai1K3oWMwXdFXWyYsxW7Z/gLEVlV28N5iXIDGBNw==
+
+"@wippy-fe/webcomponent-core@file:../../npm/webcomponent-core":
+  version "0.1.0"
+  resolved "file:../../npm/webcomponent-core"
+
+"@wippy-fe/webcomponent-vue@file:../../npm/webcomponent-vue":
+  version "0.1.0"
+  resolved "file:../../npm/webcomponent-vue"
+  dependencies:
+    "@wippy-fe/webcomponent-core" "^0.1.0"
 
 alien-signals@^1.0.3:
   version "1.0.13"

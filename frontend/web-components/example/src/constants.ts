@@ -1,6 +1,7 @@
-import type { InjectionKey, Ref } from 'vue'
-import type { ComponentProps } from './index.ts'
+import { useProps, useEvents, usePropsErrors } from '@wippy-fe/webcomponent-vue'
+import type { ComponentProps } from './types.ts'
 
+// Domain-specific events for this component
 export interface Events {
   load: undefined
   unload: undefined
@@ -12,11 +13,10 @@ export interface Events {
   'uploads-loaded': { count: number }
 }
 
-export type EventEmitter = <K extends keyof Events>(event: K, details: Events[K]) => void
-
-export const EVENT_PROVIDER = Symbol('emit') as InjectionKey<EventEmitter>
-export const PROPS_PROVIDER = Symbol('props') as InjectionKey<Ref<ComponentProps>>
-export const PROPS_ERROR_PROVIDER = Symbol('props_error') as InjectionKey<Ref<string | null>>
+// Typed composable helpers for this component's Vue components
+export const useComponentProps = () => useProps<ComponentProps>()
+export const useComponentEvents = () => useEvents<Events>()
+export const useComponentPropsErrors = usePropsErrors
 
 export const DEFAULT_COMPONENT_PROPS = {
   apiEndpoint: '/api/v1/uploads',
@@ -27,4 +27,4 @@ export const DEFAULT_COMPONENT_PROPS = {
   pageSize: 20,
   enableRealTimeUpdates: true,
   theme: 'auto' as 'auto' | 'light' | 'dark',
-} 
+}
