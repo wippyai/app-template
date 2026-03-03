@@ -1,4 +1,4 @@
-@import "theme-config.css";
+@import "@wippy-fe/theme/theme-config.css";
 
 .ws-log-container {
   font-family: 'Courier New', Consolas, monospace;

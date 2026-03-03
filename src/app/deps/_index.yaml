@@ -168,4 +168,4 @@ entries:
       - name: history_mode
         value: browser
       - name: css_variables
-        value: '{"p-primary":"red"}'
+        value: '{"--p-primary":"#6366f1"}'

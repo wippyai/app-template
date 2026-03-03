@@ -1,4 +1,4 @@
-@import "theme-config.css";
+@import "@wippy-fe/theme/theme-config.css";
 
 .markdown-container {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;

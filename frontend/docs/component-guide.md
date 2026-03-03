@@ -46,8 +46,7 @@ my-widget/
     ├── index.ts                # WippyVueElement subclass + define()
     ├── types.ts                # ComponentProps interface
     ├── constants.ts            # Events interface + typed composables
-    ├── styles.css              # Component styles (imports theme-config.css)
-    ├── theme-config.css        # Dev-time fallback theme variables
+    ├── styles.css              # Component styles (imports @wippy-fe/theme)
     ├── tailwind.css            # Only if using Tailwind (@tailwind directives)
     └── app/
         └── my-widget.vue       # Main Vue component
@@ -71,14 +70,15 @@ Use this for components that only need theme variables and custom CSS (like `web
   "browser": "dist/index.js",
   "files": ["dist/", "src/", "package.json"],
   "dependencies": {
-    "@wippy-fe/webcomponent-core": "^0.0.6",
-    "@wippy-fe/webcomponent-vue": "^0.0.6"
+    "@wippy-fe/theme": "^0.0.7",
+    "@wippy-fe/webcomponent-core": "^0.0.7",
+    "@wippy-fe/webcomponent-vue": "^0.0.7"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "@vitejs/plugin-vue": "^5.0.0",
-    "@wippy-fe/proxy": "^0.0.6",
+    "@wippy-fe/proxy": "^0.0.7",
     "eslint": "^8.57.0",
     "eslint-plugin-vue": "^9.0.0",
     "typescript": "^5.0.0",
@@ -88,7 +88,7 @@ Use this for components that only need theme variables and custom CSS (like `web
     "vue-tsc": "^2.0.0"
   },
   "peerDependencies": {
-    "@wippy-fe/proxy": "^0.0.6",
+    "@wippy-fe/proxy": "^0.0.7",
     "vue": "^3.5.0"
   },
   "wippy": {
@@ -312,7 +312,7 @@ define(import.meta.url, MyWidgetElement)
 #### src/styles.css
 
 ```css
-@import "theme-config.css";
+@import "@wippy-fe/theme/theme-config.css";
 
 .my-widget {
   font-family: inherit;
@@ -333,10 +333,6 @@ define(import.meta.url, MyWidgetElement)
   color: var(--p-text-muted-color, #999);
 }
 ```
-
-#### src/theme-config.css
-
-This file provides fallback CSS variables for local development. At runtime, the host injects the real theme via `hostCssKeys: ['themeConfigUrl']`. Copy this from any existing component (e.g., `reaction-bar/src/theme-config.css`). It defines `--p-primary-*`, `--p-surface-*`, `--p-text-color`, `--p-content-background`, etc., with light and dark mode variants.
 
 #### src/app/my-widget.vue
 
@@ -376,21 +372,21 @@ Only the files that **differ** from Variant A are shown.
 ```json
 {
   "dependencies": {
-    "@wippy-fe/webcomponent-core": "^0.0.6",
-    "@wippy-fe/webcomponent-vue": "^0.0.6",
+    "@wippy-fe/theme": "^0.0.7",
+    "@wippy-fe/webcomponent-core": "^0.0.7",
+    "@wippy-fe/webcomponent-vue": "^0.0.7",
     "primevue": "^4.3.3"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "@vitejs/plugin-vue": "^5.0.0",
-    "@wippy-fe/proxy": "^0.0.6",
+    "@wippy-fe/proxy": "^0.0.7",
     "autoprefixer": "^10.4.0",
     "eslint": "^8.57.0",
     "eslint-plugin-vue": "^9.0.0",
     "postcss": "^8.4.0",
     "tailwindcss": "3",
-    "tailwindcss-primeui": "^0.6.1",
     "typescript": "^5.0.0",
     "vite": "^6.0.0",
     "vue": "^3.5.0",
@@ -398,42 +394,23 @@ Only the files that **differ** from Variant A are shown.
     "vue-tsc": "^2.0.0"
   },
   "peerDependencies": {
-    "@wippy-fe/proxy": "^0.0.6",
+    "@wippy-fe/proxy": "^0.0.7",
     "vue": "^3.5.0"
   }
 }
 ```
 
-Key additions: `primevue` in dependencies; `autoprefixer`, `postcss`, `tailwindcss`, `tailwindcss-primeui` in devDependencies.
+Key additions: `@wippy-fe/theme` and `primevue` in dependencies; `autoprefixer`, `postcss`, `tailwindcss` in devDependencies. Tailwind plugins (`tailwindcss-primeui`, `tailwind-scrollbar`) come from the shared preset in `@wippy-fe/theme`.
 
 #### tailwind.config.ts
 
 ```typescript
-import PrimeUI from 'tailwindcss-primeui'
+import themePreset from '@wippy-fe/theme/tailwind.config'
 
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: ['./index.html', './src/**/*.{vue,ts}'],
-  theme: {
-    extend: {
-      colors: {
-        secondary: {
-          50: 'var(--p-secondary-50)',
-          100: 'var(--p-secondary-100)',
-          200: 'var(--p-secondary-200)',
-          300: 'var(--p-secondary-300)',
-          400: 'var(--p-secondary-400)',
-          500: 'var(--p-secondary-500)',
-          600: 'var(--p-secondary-600)',
-          700: 'var(--p-secondary-700)',
-          800: 'var(--p-secondary-800)',
-          900: 'var(--p-secondary-900)',
-          950: 'var(--p-secondary-950)',
-        },
-      },
-    },
-  },
-  plugins: [PrimeUI],
+  presets: [themePreset],
+  content: ['./src/**/*.{vue,ts}'],
 }
 ```
 
@@ -459,7 +436,7 @@ module.exports = {
 #### src/styles.css
 
 ```css
-@import "theme-config.css";
+@import "@wippy-fe/theme/theme-config.css";
 @import 'tailwind.css';
 ```
 
@@ -468,8 +445,7 @@ module.exports = {
 ```typescript
 import { WippyVueElement, define } from '@wippy-fe/webcomponent-vue'
 import type { WippyElementConfig, WippyPropsSchema } from '@wippy-fe/webcomponent-vue'
-import type { App } from 'vue'
-import PrimeVue from 'primevue/config'
+import { PrimeVuePlugin } from '@wippy-fe/theme/primevue-plugin'
 import type { ComponentProps } from './types.ts'
 import type { Events } from './constants.ts'
 import MyWidget from './app/my-widget.vue'
@@ -488,9 +464,7 @@ class MyWidgetElement extends WippyVueElement<ComponentProps, Events> {
   static get vueConfig() {
     return {
       rootComponent: MyWidget,
-      plugins: [
-        { install: (app: App) => app.use(PrimeVue, { theme: 'none' }) },
-      ],
+      plugins: [PrimeVuePlugin],
     }
   }
 }
@@ -504,8 +478,9 @@ define(import.meta.url, MyWidgetElement)
 
 Key differences from Variant A:
 - `hostCssKeys` includes `'primeVueCssUrl'`
-- `vueConfig` includes the PrimeVue plugin with `{ theme: 'none' }` (host provides theme)
+- `vueConfig` includes `PrimeVuePlugin` from `@wippy-fe/theme/primevue-plugin` (installs PrimeVue with `{ theme: 'none' }`)
 - `styles.css` imports `tailwind.css`
+- `tailwind.config.ts` uses the shared preset from `@wippy-fe/theme/tailwind.config`
 
 #### src/app/my-widget.vue (using Tailwind + PrimeVue)
 
@@ -737,7 +712,7 @@ host.logout()
 
 4. **No root-level padding or margin** on components -- the host controls spacing.
 
-5. **theme-config.css** is a dev-time fallback. It defines all `--p-*` variables so your component renders correctly during local development. At runtime, the host injects the real theme via `hostCssKeys: ['themeConfigUrl']`. Copy this file from any existing component.
+5. **`@wippy-fe/theme`** provides the dev-time fallback CSS variables (`theme-config.css`). Import it via `@import "@wippy-fe/theme/theme-config.css"` in your `styles.css`. At runtime, the host injects the real theme via `hostCssKeys: ['themeConfigUrl']`. See `@wippy-fe/theme/THEMING.md` for the full list of available CSS variables and Tailwind utility classes.
 
 6. **Tailwind components** import `tailwind.css` (which has the `@tailwind` directives) from `styles.css`. Both files are bundled via the `?inline` import in `index.ts`.
 

@@ -112,7 +112,7 @@ export const useToggle = (initialValue = false) => {
 - Leverage `@apply` sparingly, only for highly reused utility combinations
 
 ### Theming with PrimeVue Variables
-The `tailwindcss-primeui` plugin maps Tailwind classes to PrimeVue CSS variables:
+The shared Tailwind preset from `@wippy-fe/theme/tailwind.config` includes `tailwindcss-primeui`, which maps Tailwind classes to PrimeVue CSS variables. See `@wippy-fe/theme/THEMING.md` for the full reference on available CSS variables, utility classes, and dark mode behavior.
 - `bg-primary`, `bg-primary-500`, `text-primary` → `--p-primary-*`
 - `bg-surface-0`, `text-surface-700` → `--p-surface-*`
 - `bg-secondary-500`, `text-secondary-300` → `--p-secondary-*`
@@ -148,7 +148,7 @@ background: color-mix(in srgb, var(--p-content-background) 85%, var(--p-text-col
 
 ## PrimeVue
 
-- **Unstyled mode**: PrimeVue 4 with `{ theme: 'none' }` — styled via `tailwindcss-primeui`
+- **Unstyled mode**: PrimeVue 4 installed via `PrimeVuePlugin` from `@wippy-fe/theme/primevue-plugin` — styled via `tailwindcss-primeui`
 - **Web components**: Bundle PrimeVue (add to `dependencies`, not externals). Request `primeVueCssUrl` in `hostCssKeys`
 - **Web apps**: Externalize PrimeVue and add `primevue/*` subpath entries to the app's own import map in `app.html`
 

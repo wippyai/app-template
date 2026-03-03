@@ -1,12 +1,12 @@
 import { addCollection } from '@iconify/vue'
 import { createPinia } from 'pinia'
 import { createApp } from 'vue'
-import PrimeVue from 'primevue/config'
+import { PrimeVuePlugin } from '@wippy-fe/theme/primevue-plugin'
 
 import App from './app/app.vue'
 import { AXIOS_INSTANCE, HOST_API, WIPPY_INSTANCE } from './constants'
 import { createAppRouter } from './router'
-import './theme-config.css'
+import '@wippy-fe/theme/theme-config.css'
 import './styles.css'
 import './tailwind.css'
 
@@ -30,7 +30,7 @@ export async function createMainApp() {
   const app = createApp(App)
 
   app.use(createPinia())
-  app.use(PrimeVue, { theme: 'none' })
+  app.use(PrimeVuePlugin)
 
   app.provide(HOST_API, hostApi)
   app.provide(AXIOS_INSTANCE, axios)

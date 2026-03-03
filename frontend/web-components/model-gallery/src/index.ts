@@ -1,7 +1,6 @@
 import { WippyVueElement, define } from '@wippy-fe/webcomponent-vue'
 import type { WippyElementConfig, WippyPropsSchema } from '@wippy-fe/webcomponent-vue'
-import type { App } from 'vue'
-import PrimeVue from 'primevue/config'
+import { PrimeVuePlugin } from '@wippy-fe/theme/primevue-plugin'
 import type { ComponentProps } from './types.ts'
 import type { Events } from './constants.ts'
 import ModelGallery from './app/model-gallery.vue'
@@ -20,9 +19,7 @@ class ModelGalleryElement extends WippyVueElement<ComponentProps, Events> {
   static get vueConfig() {
     return {
       rootComponent: ModelGallery,
-      plugins: [
-        { install: (app: App) => app.use(PrimeVue, { theme: 'none' }) },
-      ],
+      plugins: [PrimeVuePlugin],
     }
   }
 }

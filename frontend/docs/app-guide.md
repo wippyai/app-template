@@ -490,13 +490,13 @@ Use this standard injections block for most Wippy apps:
 import { addCollection } from '@iconify/vue'
 import { createPinia } from 'pinia'
 import { createApp } from 'vue'
-import PrimeVue from 'primevue/config'
+import { PrimeVuePlugin } from '@wippy-fe/theme/primevue-plugin'
 
 import App from './app/App.vue'
 import { AXIOS_INSTANCE, HOST_API, WIPPY_INSTANCE } from './constants'
 import { createAppRouter } from './router'
+import '@wippy-fe/theme/theme-config.css'
 import './styles.css'
-import './theme-config.css'
 import './tailwind.css'
 
 export async function createMainApp() {
@@ -521,7 +521,7 @@ export async function createMainApp() {
     app.use(createPinia())
 
     // Add PrimeVue (without services - prefer host.confirm and host.toast)
-    app.use(PrimeVue, { theme: 'none' })
+    app.use(PrimeVuePlugin)
 
     // Provide Wippy services
     app.provide(HOST_API, hostApi)
@@ -701,7 +701,6 @@ my-app/
     ├── types.ts            # TypeScript types
     ├── styles.css          # Base styles
     ├── tailwind.css        # Tailwind directives
-    ├── theme-config.css    # Theme variables (injected by host)
     ├── app/
     │   └── app.vue         # Root Vue component
     └── router/
@@ -722,16 +721,16 @@ Examples: `@anthropic/app-analytics-dashboard`, `@acme/app-user-settings`
   "title": "My Dashboard",
   "description": "Dashboard application description",
   "files": ["dist/", "src/", "package.json"],
-  "dependencies": {},
+  "dependencies": {
+    "@wippy-fe/theme": "^0.0.7"
+  },
   "devDependencies": {
-    "@wippy-fe/types-global-proxy": "^0.0.6",
+    "@wippy-fe/types-global-proxy": "^0.0.7",
     "@vitejs/plugin-vue": "^5.0.0",
     "autoprefixer": "^10.4.0",
     "postcss": "^8.4.0",
     "primevue": "^4.3.3",
-    "tailwind-scrollbar": "^3.0.0",
     "tailwindcss": "3",
-    "tailwindcss-primeui": "^0.6.1",
     "typescript": "^5.0.0",
     "vite": "^6.0.0",
     "vue": "^3.5.0",
@@ -740,7 +739,7 @@ Examples: `@anthropic/app-analytics-dashboard`, `@acme/app-user-settings`
   },
   "peerDependencies": {
     "@iconify/vue": "^5.0.0",
-    "@wippy-fe/proxy": "^0.0.6",
+    "@wippy-fe/proxy": "^0.0.7",
     "axios": "^1.0.0",
     "pinia": "^2.1.0",
     "primevue": "^4.3.3",
@@ -898,38 +897,15 @@ export default defineConfig({
 ### tailwind.config.ts
 
 ```typescript
-import TailwindScrollbar from 'tailwind-scrollbar'
-import PrimeUI from 'tailwindcss-primeui'
+import themePreset from '@wippy-fe/theme/tailwind.config'
 
 /** @type {import('tailwindcss').Config} */
 export default {
+  presets: [themePreset],
   content: [
     './app.html',
     './src/**/*.{vue,ts}',
   ],
-  theme: {
-    extend: {
-      colors: {
-        secondary: {
-          50: 'var(--p-secondary-50)',
-          100: 'var(--p-secondary-100)',
-          200: 'var(--p-secondary-200)',
-          300: 'var(--p-secondary-300)',
-          400: 'var(--p-secondary-400)',
-          500: 'var(--p-secondary-500)',
-          600: 'var(--p-secondary-600)',
-          700: 'var(--p-secondary-700)',
-          800: 'var(--p-secondary-800)',
-          900: 'var(--p-secondary-900)',
-          950: 'var(--p-secondary-950)',
-        },
-      },
-    },
-  },
-  plugins: [PrimeUI, TailwindScrollbar({
-    nocompatible: true,
-    preferredStrategy: 'pseudoelements',
-  })],
 }
 ```
 
@@ -982,11 +958,11 @@ import { addCollection } from '@iconify/vue'
 import { createPinia } from 'pinia'
 import { createApp } from 'vue'
 import App from './app/app.vue'
-import PrimeVue from 'primevue/config'
+import { PrimeVuePlugin } from '@wippy-fe/theme/primevue-plugin'
 
 import { AXIOS_INSTANCE, HOST_API, WIPPY_INSTANCE } from './constants.ts'
 import { createAppRouter } from './router'
-import './theme-config.css'
+import '@wippy-fe/theme/theme-config.css'
 import './styles.css'
 import './tailwind.css'
 
@@ -1009,7 +985,7 @@ export async function createMainApp() {
 
   const app = createApp(App)
   app.use(createPinia())
-  app.use(PrimeVue, { theme: 'none' })
+  app.use(PrimeVuePlugin)
 
   // Provide Wippy services for injection in components
   app.provide(HOST_API, hostApi)
@@ -1139,16 +1115,6 @@ svg.iconify {
 @tailwind utilities;
 ```
 
-### src/theme-config.css
-
-```css
-/* This file is a placeholder - theme variables are injected by the host */
-/* The host provides CSS variables like:
-   --p-primary-500, --p-surface-100, etc.
-   These are automatically injected when wippy.proxy.injections.css.themeConfig is true
-*/
-```
-
 ---
 
 ## Common Build Errors and Solutions
@@ -1162,8 +1128,8 @@ svg.iconify {
 **Solution:** Use `input: { app: resolve(__dirname, 'app.html') }` with resolve(), not a plain string.
 
 ### "ENOENT: no such file or directory" for CSS
-**Cause:** theme-config.css file missing.
-**Solution:** Create an empty src/theme-config.css file - the host injects theme variables at runtime.
+**Cause:** Theme CSS import not resolving.
+**Solution:** Ensure `@wippy-fe/theme` is in dependencies and run `npm install`. Theme variables are provided by `@wippy-fe/theme/theme-config.css`.
 
 ### Build succeeds but page is blank
 **Cause:** Missing `@wippy/scripts` placeholder in app.html.

@@ -21,7 +21,7 @@ Use this checklist to verify that a generated Wippy app is complete and correctl
 - [ ] `src/types.ts` - TypeScript type definitions
 - [ ] `src/styles.css` - Base styles
 - [ ] `src/tailwind.css` - Tailwind directives (@tailwind base/components/utilities)
-- [ ] `src/theme-config.css` - Theme variable placeholder (can be empty)
+- [ ] `@wippy-fe/theme` in dependencies (provides theme variables)
 - [ ] `src/app/app.vue` - Root Vue component with `<router-view />`
 - [ ] `src/router/index.ts` - Router with host communication
 
@@ -64,12 +64,12 @@ Use this checklist to verify that a generated Wippy app is complete and correctl
 - [ ] `wippy.proxy.injections.iconifyIcons` is `false` (unless using CDN Iconify)
 
 ### Dependencies Structure
+- [ ] `dependencies` includes `@wippy-fe/theme`
 - [ ] `devDependencies` includes `@wippy-fe/types-global-proxy`
 - [ ] `devDependencies` includes `@vitejs/plugin-vue`
 - [ ] `devDependencies` includes `autoprefixer`
 - [ ] `devDependencies` includes `primevue`
 - [ ] `devDependencies` includes `tailwindcss` (version 3)
-- [ ] `devDependencies` includes `tailwindcss-primeui`
 - [ ] `devDependencies` includes `typescript`
 - [ ] `devDependencies` includes `vite`
 - [ ] `devDependencies` includes `vue` (for build-time)
@@ -132,11 +132,11 @@ Use this checklist to verify that a generated Wippy app is complete and correctl
 - [ ] Imports `addCollection` from `@iconify/vue`
 - [ ] Imports `createPinia` from `pinia`
 - [ ] Imports `createApp` from `vue`
-- [ ] Imports `PrimeVue` from `primevue/config`
+- [ ] Imports `PrimeVuePlugin` from `@wippy-fe/theme/primevue-plugin`
 - [ ] Imports root App component
 - [ ] Imports constants (HOST_API, AXIOS_INSTANCE, WIPPY_INSTANCE)
 - [ ] Imports `createAppRouter` from router
-- [ ] Imports CSS files (styles.css, theme-config.css, tailwind.css)
+- [ ] Imports CSS files (@wippy-fe/theme/theme-config.css, styles.css, tailwind.css)
 
 ### createMainApp Function
 - [ ] Awaits `window.$W.config()`
@@ -147,7 +147,7 @@ Use this checklist to verify that a generated Wippy app is complete and correctl
 - [ ] Handles custom icons from `config.customization?.icons`
 - [ ] Calls `createApp(App)`
 - [ ] Uses `app.use(createPinia())`
-- [ ] Uses `app.use(PrimeVue, { theme: 'none' })`
+- [ ] Uses `app.use(PrimeVuePlugin)`
 - [ ] Provides `HOST_API` injection
 - [ ] Provides `AXIOS_INSTANCE` injection
 - [ ] Provides `WIPPY_INSTANCE` injection
@@ -209,19 +209,17 @@ Use this checklist to verify that a generated Wippy app is complete and correctl
 - [ ] Contains `@tailwind components;`
 - [ ] Contains `@tailwind utilities;`
 
-### src/theme-config.css
-- [ ] File exists (can be empty or have placeholder comment)
+### Theme (@wippy-fe/theme)
+- [ ] `@wippy-fe/theme` is in `dependencies`
+- [ ] CSS imports use `@import "@wippy-fe/theme/theme-config.css"` (not local file)
 
 ---
 
 ## 10. tailwind.config.ts Validation
 
-- [ ] Imports `TailwindScrollbar` from `tailwind-scrollbar`
-- [ ] Imports `PrimeUI` from `tailwindcss-primeui`
+- [ ] Imports `themePreset` from `@wippy-fe/theme/tailwind.config`
+- [ ] Uses `presets: [themePreset]`
 - [ ] `content` includes `'./src/**/*.{vue,ts}'`
-- [ ] `theme.extend.colors.secondary` uses CSS variables (`var(--p-secondary-*)`)
-- [ ] `plugins` includes `PrimeUI`
-- [ ] `plugins` includes `TailwindScrollbar` with `nocompatible: true`
 
 ---
 
@@ -280,13 +278,13 @@ Use this checklist to verify that a generated Wippy app is complete and correctl
 
 - [ ] `base` in vite.config.ts is NOT missing or set to `'/'`
 - [ ] `postcss.config.js` exists (Tailwind won't process without it)
-- [ ] `theme-config.css` file exists (even if empty)
+- [ ] `@wippy-fe/theme` is in dependencies
 - [ ] `@wippy/scripts` placeholder exists in app.html
 - [ ] Router uses `createMemoryHistory`, NOT `createWebHistory`
 - [ ] Router has `onRouteChanged` in `afterEach`
 - [ ] Router listens to `@history` event
 - [ ] All external dependencies are in `build.rollupOptions.external`
-- [ ] PrimeVue is initialized with `{ theme: 'none' }`
+- [ ] PrimeVue is initialized via `PrimeVuePlugin` from `@wippy-fe/theme/primevue-plugin`
 
 ---
 
