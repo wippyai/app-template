@@ -702,8 +702,11 @@ host.logout()
    - `--p-content-border-color` -- borders
    - `--p-primary-500`, `--p-primary-color` -- accent/brand
    - `--p-highlight-background`, `--p-highlight-color` -- selections
+   - `--p-danger-*`, `--p-success-*`, `--p-warn-*`, `--p-info-*`, `--p-help-*`, `--p-accent-*` -- severity & accent
 
 2. **Never use raw surface values** like `--p-surface-0`, `--p-surface-200`, `--p-surface-700` for theme-dependent colors. They do not adapt to dark mode. Use the semantic aliases above.
+
+3. **Use semantic severity colors, not raw Tailwind color names.** When a color conveys meaning (error, success, warning, info, help), use `danger-*`, `success-*`, `warn-*`, `info-*`, `help-*` — never `red-*`, `green-*`, `orange-*`, `sky-*`, `purple-*`. Raw color names are only for purely decorative use. Semantics first, decorative later.
 
 3. **Derived shades** via `color-mix()` instead of hardcoded surface values:
    ```css

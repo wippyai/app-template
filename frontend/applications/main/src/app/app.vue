@@ -2,6 +2,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Icon } from '@iconify/vue'
+import Button from 'primevue/button'
+import Avatar from 'primevue/avatar'
 import { useApi, useHost, useWippy } from '../composables/useWippy'
 
 const router = useRouter()
@@ -83,13 +85,13 @@ onMounted(() => {
 
 <template>
   <div class="h-full flex">
-    <aside class="w-56 shrink-0 h-full border-r border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800 flex flex-col">
+    <aside aria-label="App sidebar" class="w-56 shrink-0 h-full border-r border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800 flex flex-col">
       <div class="px-4 py-4 flex items-center gap-2.5">
         <img :src="logoUrl" alt="Wippy" class="w-8 h-8 rounded-lg" />
         <span class="text-sm font-bold text-surface-900 dark:text-surface-0 tracking-tight">Wippy App</span>
       </div>
 
-      <nav class="flex-1 px-2 py-1 space-y-0.5">
+      <nav aria-label="Main navigation" class="flex-1 px-2 py-1 space-y-0.5">
         <button
           v-for="item in navItems"
           :key="item.name"
@@ -97,9 +99,10 @@ onMounted(() => {
           :class="currentName === item.name
             ? 'bg-primary/10 text-primary font-medium'
             : 'text-surface-500 hover:text-surface-700 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800'"
+          :aria-current="currentName === item.name ? 'page' : undefined"
           @click="navigate(item.path)"
         >
-          <Icon :icon="item.icon" class="w-[18px] h-[18px]" />
+          <Icon :icon="item.icon" class="w-[18px] h-[18px]" aria-hidden="true" />
           {{ item.label }}
         </button>
       </nav>
@@ -109,36 +112,36 @@ onMounted(() => {
           class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
           @click="openWippy"
         >
-          <Icon icon="tabler:message-circle" class="w-[18px] h-[18px]" />
+          <Icon icon="tabler:message-circle" class="w-[18px] h-[18px]" aria-hidden="true" />
           Ask Wippy
         </button>
       </div>
 
       <div class="px-3 py-3 border-t border-surface-200 dark:border-surface-700">
         <div v-if="currentUser" class="flex items-center gap-2.5">
-          <div class="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary text-xs font-semibold shrink-0">
-            {{ userInitials(currentUser) }}
-          </div>
+          <Avatar :label="userInitials(currentUser)" shape="circle" class="bg-primary/10 text-primary text-xs font-semibold shrink-0" />
           <div class="min-w-0 flex-1">
             <div class="text-sm font-medium text-surface-900 dark:text-surface-0 truncate">{{ currentUser.full_name || currentUser.email }}</div>
             <div v-if="currentUser.full_name" class="text-[11px] text-surface-400 truncate">{{ currentUser.email }}</div>
           </div>
-          <button
-            class="p-1.5 rounded text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors shrink-0"
-            title="Sign out"
+          <Button
+            text
+            rounded
+            class="!p-1.5 shrink-0"
+            aria-label="Sign out"
             @click="logout"
           >
-            <Icon icon="tabler:logout" class="w-4 h-4" />
-          </button>
+            <template #icon><Icon icon="tabler:logout" class="w-4 h-4" aria-hidden="true" /></template>
+          </Button>
         </div>
         <div v-else class="flex items-center gap-2 text-[11px] text-surface-400">
-          <Icon icon="tabler:circle-filled" class="w-2 h-2 text-emerald-500" />
+          <Icon icon="tabler:circle-filled" class="w-2 h-2 text-primary" aria-hidden="true" />
           Connected
         </div>
       </div>
     </aside>
 
-    <main class="flex-1 h-full overflow-y-auto bg-surface-0 dark:bg-surface-900">
+    <main class="flex-1 h-full overflow-y-auto" style="background: color-mix(in srgb, var(--p-content-background) 94%, var(--p-text-color) 6%)">
       <router-view />
     </main>
   </div>

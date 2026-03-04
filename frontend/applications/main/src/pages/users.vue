@@ -5,9 +5,23 @@ import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import Dialog from 'primevue/dialog'
 import Checkbox from 'primevue/checkbox'
-import { useApi } from '../composables/useWippy'
+import InputText from 'primevue/inputtext'
+import Password from 'primevue/password'
+import Select from 'primevue/select'
+import DataTable from 'primevue/datatable'
+import Column from 'primevue/column'
+import Avatar from 'primevue/avatar'
+import { useApi, useHost } from '../composables/useWippy'
 
 const api = useApi()
+const host = useHost()
+
+const STATUS_OPTIONS = [
+  { label: 'Active', value: 'active' },
+  { label: 'Inactive', value: 'inactive' },
+  { label: 'Suspended', value: 'suspended' },
+  { label: 'Pending', value: 'pending' },
+]
 
 interface User {
   user_id: string
@@ -32,10 +46,6 @@ const createForm = ref({ email: '', full_name: '', password: '', groups: ['app.s
 const showEdit = ref(false)
 const editForm = ref({ user_id: '', email: '', full_name: '', status: '', password: '', groups: [] as string[] })
 
-const showDeleteConfirm = ref(false)
-const deleteTarget = ref<User | null>(null)
-const hoverRow = ref<string | null>(null)
-
 function statusSeverity(status: string): 'success' | 'danger' | 'warn' | 'secondary' {
   switch (status) {
     case 'active': return 'success'
@@ -58,6 +68,10 @@ function formatDate(ts: number): string {
   if (!ts) return ''
   const d = new Date(ts * 1000)
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+function userInitial(user: User): string {
+  return (user.full_name || user.email).charAt(0).toUpperCase()
 }
 
 async function fetchUsers() {
@@ -90,10 +104,11 @@ async function createUser() {
       }
       createForm.value = { email: '', full_name: '', password: '', groups: ['app.security:user'] }
       showCreate.value = false
+      host.toast({ severity: 'success', summary: 'User created' })
       await fetchUsers()
     }
   } catch {
-    // handled by UI
+    host.toast({ severity: 'error', summary: 'Failed to create user' })
   }
 }
 
@@ -123,28 +138,41 @@ async function saveUser() {
     await api.put(`/api/v1/users/${userId}/groups`, { groups: editForm.value.groups })
 
     showEdit.value = false
+    host.toast({ severity: 'success', summary: 'User updated' })
     await fetchUsers()
   } catch {
-    // handled by UI
+    host.toast({ severity: 'error', summary: 'Failed to update user' })
   }
 }
 
-function confirmDelete(user: User) {
-  deleteTarget.value = user
-  showDeleteConfirm.value = true
+async function confirmDelete(user: User) {
+  const name = user.full_name || user.email
+  const confirmed = await host.confirm({
+    header: 'Delete User',
+    html: `<div class="flex items-start gap-3">
+      <iconify-icon icon="tabler:alert-triangle" width="24" style="color: var(--p-danger-500); margin-top: 2px; flex-shrink: 0;"></iconify-icon>
+      <div>
+        <p style="font-weight: 500; margin: 0 0 4px 0;">Delete "${name}"?</p>
+        <p style="font-size: 0.75rem; color: var(--p-text-muted-color); margin: 0;">This will permanently delete the user and revoke all access. This action cannot be undone.</p>
+      </div>
+    </div>`,
+    acceptLabel: 'Delete',
+    rejectLabel: 'Cancel',
+    acceptProps: { severity: 'danger' },
+    rejectProps: { severity: 'secondary', text: true },
+  })
+  if (confirmed) await executeDelete(user)
 }
 
-async function executeDelete() {
-  if (!deleteTarget.value) return
+async function executeDelete(user: User) {
   try {
-    const { data } = await api.delete(`/api/v1/users/${deleteTarget.value.user_id}`)
+    const { data } = await api.delete(`/api/v1/users/${user.user_id}`)
     if (data.success) {
-      showDeleteConfirm.value = false
-      deleteTarget.value = null
+      host.toast({ severity: 'success', summary: 'User deleted' })
       await fetchUsers()
     }
   } catch {
-    // handled by UI
+    host.toast({ severity: 'error', summary: 'Failed to delete user' })
   }
 }
 
@@ -157,7 +185,7 @@ onMounted(fetchUsers)
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-primary">
-            <Icon icon="tabler:users" class="w-5 h-5 text-white" />
+            <Icon icon="tabler:users" class="w-5 h-5 text-primary-contrast" aria-hidden="true" />
           </div>
           <div>
             <h1 class="text-sm font-semibold text-surface-900 dark:text-surface-0">Users</h1>
@@ -165,84 +193,85 @@ onMounted(fetchUsers)
           </div>
         </div>
         <Button label="Create User" size="small" @click="showCreate = true">
-          <template #icon><Icon icon="tabler:plus" class="w-4 h-4" /></template>
+          <template #icon><Icon icon="tabler:plus" class="w-4 h-4" aria-hidden="true" /></template>
         </Button>
       </div>
     </div>
 
     <div class="flex-1 overflow-y-auto">
-      <table v-if="users.length > 0" class="w-full text-sm">
-        <thead class="bg-surface-50 dark:bg-surface-800 border-b border-surface-200 dark:border-surface-700 sticky top-0">
-          <tr>
-            <th class="text-left px-5 py-2.5 text-xs font-medium text-surface-500 uppercase tracking-wider">User</th>
-            <th class="text-left px-5 py-2.5 text-xs font-medium text-surface-500 uppercase tracking-wider">Status</th>
-            <th class="text-left px-5 py-2.5 text-xs font-medium text-surface-500 uppercase tracking-wider">Groups</th>
-            <th class="text-left px-5 py-2.5 text-xs font-medium text-surface-500 uppercase tracking-wider">Created</th>
-            <th class="w-24 px-5 py-2.5"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="user in users"
-            :key="user.user_id"
-            class="border-b border-surface-100 dark:border-surface-800 hover:bg-surface-50 dark:hover:bg-surface-800/50 transition-colors"
-            @mouseenter="hoverRow = user.user_id"
-            @mouseleave="hoverRow = null"
-          >
-            <td class="px-5 py-3">
-              <div class="flex items-center gap-3">
-                <div class="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary text-xs font-semibold shrink-0">
-                  {{ (user.full_name || user.email).charAt(0).toUpperCase() }}
-                </div>
-                <div class="min-w-0">
-                  <div class="text-surface-900 dark:text-surface-0 font-medium truncate">{{ user.full_name || '-' }}</div>
-                  <div class="text-[11px] text-surface-400 truncate">{{ user.email }}</div>
-                </div>
+      <DataTable
+        v-if="users.length > 0"
+        :value="users"
+        :loading="loading"
+        dataKey="user_id"
+        :pt="{ bodyRow: { class: 'group' } }"
+        class="text-sm"
+      >
+        <Column header="User" field="full_name">
+          <template #body="{ data: user }">
+            <div class="flex items-center gap-3">
+              <Avatar :label="userInitial(user)" shape="circle" class="bg-primary/10 text-primary text-xs font-semibold" />
+              <div class="min-w-0">
+                <div class="text-surface-900 dark:text-surface-0 font-medium truncate">{{ user.full_name || '-' }}</div>
+                <div class="text-[11px] text-surface-400 truncate">{{ user.email }}</div>
               </div>
-            </td>
-            <td class="px-5 py-3">
-              <Tag :value="user.status" :severity="statusSeverity(user.status)" class="text-[10px]" />
-            </td>
-            <td class="px-5 py-3">
-              <div class="flex flex-wrap gap-1">
-                <Tag
-                  v-for="g in user.security_groups"
-                  :key="g"
-                  :value="groupLabel(g)"
-                  :severity="groupSeverity(g)"
-                  class="text-[10px]"
-                />
-                <span v-if="user.security_groups.length === 0" class="text-xs text-surface-400">None</span>
-              </div>
-            </td>
-            <td class="px-5 py-3 text-xs text-surface-400">
-              {{ formatDate(user.created_at) }}
-            </td>
-            <td class="px-5 py-3">
-              <div class="flex items-center gap-1 justify-end" :class="hoverRow === user.user_id ? 'opacity-100' : 'opacity-0'" style="transition: opacity 0.15s">
-                <button
-                  class="p-1.5 rounded text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
-                  @click.stop="openEdit(user)"
-                  title="Edit"
-                >
-                  <Icon icon="tabler:edit" class="w-4 h-4" />
-                </button>
-                <button
-                  class="p-1.5 rounded text-surface-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
-                  @click.stop="confirmDelete(user)"
-                  title="Delete"
-                >
-                  <Icon icon="tabler:trash" class="w-4 h-4" />
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+            </div>
+          </template>
+        </Column>
+        <Column header="Status" field="status">
+          <template #body="{ data: user }">
+            <Tag :value="user.status" :severity="statusSeverity(user.status)" class="text-[10px]" />
+          </template>
+        </Column>
+        <Column header="Groups" field="security_groups">
+          <template #body="{ data: user }">
+            <div class="flex flex-wrap gap-1">
+              <Tag
+                v-for="g in user.security_groups"
+                :key="g"
+                :value="groupLabel(g)"
+                :severity="groupSeverity(g)"
+                class="text-[10px]"
+              />
+              <span v-if="user.security_groups.length === 0" class="text-xs text-surface-400">None</span>
+            </div>
+          </template>
+        </Column>
+        <Column header="Created" field="created_at">
+          <template #body="{ data: user }">
+            <span class="text-xs text-surface-400">{{ formatDate(user.created_at) }}</span>
+          </template>
+        </Column>
+        <Column headerStyle="width: 6rem">
+          <template #body="{ data: user }">
+            <div class="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button
+                text
+                rounded
+                class="!p-1.5"
+                @click.stop="openEdit(user)"
+                :aria-label="`Edit ${user.full_name || user.email}`"
+              >
+                <template #icon><Icon icon="tabler:edit" class="w-4 h-4" aria-hidden="true" /></template>
+              </Button>
+              <Button
+                text
+                rounded
+                severity="danger"
+                class="!p-1.5"
+                @click.stop="confirmDelete(user)"
+                :aria-label="`Delete ${user.full_name || user.email}`"
+              >
+                <template #icon><Icon icon="tabler:trash" class="w-4 h-4" aria-hidden="true" /></template>
+              </Button>
+            </div>
+          </template>
+        </Column>
+      </DataTable>
 
       <div v-else-if="!loading" class="h-full flex items-center justify-center">
         <div class="text-center">
-          <Icon icon="tabler:users" class="w-10 h-10 text-surface-300 dark:text-surface-600 mx-auto mb-2" />
+          <Icon icon="tabler:users" class="w-10 h-10 text-surface-300 dark:text-surface-600 mx-auto mb-2" aria-hidden="true" />
           <p class="text-sm text-surface-400 mb-3">No users yet</p>
           <Button label="Create your first user" size="small" @click="showCreate = true" />
         </div>
@@ -252,22 +281,22 @@ onMounted(fetchUsers)
     <Dialog v-model:visible="showCreate" header="Create User" :style="{ width: '460px' }" modal>
       <form @submit.prevent="createUser" class="space-y-4">
         <div>
-          <label class="navi-label">Email</label>
-          <input v-model="createForm.email" type="email" required class="navi-input" placeholder="user@example.com" />
+          <label for="create-email" class="block mb-1 text-xs font-medium text-muted-color">Email</label>
+          <InputText id="create-email" v-model="createForm.email" type="email" placeholder="user@example.com" fluid />
         </div>
         <div>
-          <label class="navi-label">Full Name</label>
-          <input v-model="createForm.full_name" type="text" class="navi-input" placeholder="Jane Doe" />
+          <label for="create-name" class="block mb-1 text-xs font-medium text-muted-color">Full Name</label>
+          <InputText id="create-name" v-model="createForm.full_name" placeholder="Jane Doe" fluid />
         </div>
         <div>
-          <label class="navi-label">Password</label>
-          <input v-model="createForm.password" type="password" required minlength="8" class="navi-input" placeholder="Minimum 8 characters" />
+          <label for="create-password" class="block mb-1 text-xs font-medium text-muted-color">Password</label>
+          <Password v-model="createForm.password" inputId="create-password" placeholder="Minimum 8 characters" :feedback="false" fluid toggleMask />
         </div>
         <div>
-          <label class="navi-label">Security Groups</label>
-          <div class="space-y-2 mt-1.5">
+          <span class="block mb-1 text-xs font-medium text-muted-color">Security Groups</span>
+          <div class="space-y-2 mt-1.5" role="group" aria-label="Security groups">
             <label v-for="sg in SECURITY_GROUPS" :key="sg.id" class="flex items-center gap-2 cursor-pointer text-surface-700 dark:text-surface-300">
-              <Checkbox v-model="createForm.groups" :value="sg.id" />
+              <Checkbox v-model="createForm.groups" :value="sg.id" :aria-label="sg.label" />
               <span class="text-sm">{{ sg.label }}</span>
               <span class="text-[11px] text-surface-400 font-mono">{{ sg.id }}</span>
             </label>
@@ -285,31 +314,26 @@ onMounted(fetchUsers)
     <Dialog v-model:visible="showEdit" header="Edit User" :style="{ width: '460px' }" modal>
       <form @submit.prevent="saveUser" class="space-y-4">
         <div>
-          <label class="navi-label">Email</label>
-          <input v-model="editForm.email" type="email" class="navi-input" />
+          <label for="edit-email" class="block mb-1 text-xs font-medium text-muted-color">Email</label>
+          <InputText id="edit-email" v-model="editForm.email" type="email" fluid />
         </div>
         <div>
-          <label class="navi-label">Full Name</label>
-          <input v-model="editForm.full_name" type="text" class="navi-input" />
+          <label for="edit-name" class="block mb-1 text-xs font-medium text-muted-color">Full Name</label>
+          <InputText id="edit-name" v-model="editForm.full_name" fluid />
         </div>
         <div>
-          <label class="navi-label">Status</label>
-          <select v-model="editForm.status" class="navi-input">
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="suspended">Suspended</option>
-            <option value="pending">Pending</option>
-          </select>
+          <label for="edit-status" class="block mb-1 text-xs font-medium text-muted-color">Status</label>
+          <Select v-model="editForm.status" inputId="edit-status" :options="STATUS_OPTIONS" optionLabel="label" optionValue="value" fluid aria-label="User status" />
         </div>
         <div>
-          <label class="navi-label">New Password</label>
-          <input v-model="editForm.password" type="password" minlength="8" placeholder="Leave empty to keep current" class="navi-input" />
+          <label for="edit-password" class="block mb-1 text-xs font-medium text-muted-color">New Password</label>
+          <Password v-model="editForm.password" inputId="edit-password" placeholder="Leave empty to keep current" :feedback="false" fluid toggleMask />
         </div>
         <div>
-          <label class="navi-label">Security Groups</label>
-          <div class="space-y-2 mt-1.5">
+          <span class="block mb-1 text-xs font-medium text-muted-color">Security Groups</span>
+          <div class="space-y-2 mt-1.5" role="group" aria-label="Security groups">
             <label v-for="sg in SECURITY_GROUPS" :key="sg.id" class="flex items-center gap-2 cursor-pointer text-surface-700 dark:text-surface-300">
-              <Checkbox v-model="editForm.groups" :value="sg.id" />
+              <Checkbox v-model="editForm.groups" :value="sg.id" :aria-label="sg.label" />
               <span class="text-sm">{{ sg.label }}</span>
               <span class="text-[11px] text-surface-400 font-mono">{{ sg.id }}</span>
             </label>
@@ -324,22 +348,5 @@ onMounted(fetchUsers)
       </template>
     </Dialog>
 
-    <Dialog v-model:visible="showDeleteConfirm" header="Delete User" :style="{ width: '420px' }" modal>
-      <div class="flex items-start gap-3">
-        <div class="flex items-center justify-center w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 shrink-0">
-          <Icon icon="tabler:alert-triangle" class="w-5 h-5 text-red-600 dark:text-red-400" />
-        </div>
-        <div>
-          <p class="text-sm text-surface-900 dark:text-surface-0 font-medium mb-1">Delete "{{ deleteTarget?.full_name || deleteTarget?.email }}"?</p>
-          <p class="text-xs text-surface-400">This will permanently delete the user and revoke all access. This action cannot be undone.</p>
-        </div>
-      </div>
-      <template #footer>
-        <div class="flex justify-end gap-2">
-          <Button label="Cancel" severity="secondary" text @click="showDeleteConfirm = false" />
-          <Button label="Delete" severity="danger" @click="executeDelete" />
-        </div>
-      </template>
-    </Dialog>
   </div>
 </template>

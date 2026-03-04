@@ -41,10 +41,10 @@
     "type-check": "vue-tsc --build --force"
   },
   "dependencies": {
-    "@wippy-fe/theme": "^0.0.8"
+    "@wippy-fe/theme": "^0.0.11"
   },
   "devDependencies": {
-    "@wippy-fe/types-global-proxy": "^0.0.8",
+    "@wippy-fe/types-global-proxy": "^0.0.11",
     "@vitejs/plugin-vue": "^5.0.0",
     "autoprefixer": "^10.4.0",
     "postcss": "^8.4.0",
@@ -58,7 +58,7 @@
   },
   "peerDependencies": {
     "@iconify/vue": "^5.0.0",
-    "@wippy-fe/proxy": "^0.0.8",
+    "@wippy-fe/proxy": "^0.0.11",
     "axios": "^1.0.0",
     "luxon": "^3.5.0",
     "pinia": "^2.1.0",

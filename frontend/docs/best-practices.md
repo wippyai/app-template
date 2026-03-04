@@ -116,6 +116,24 @@ The shared Tailwind preset from `@wippy-fe/theme/tailwind.config` includes `tail
 - `bg-primary`, `bg-primary-500`, `text-primary` → `--p-primary-*`
 - `bg-surface-0`, `text-surface-700` → `--p-surface-*`
 - `bg-secondary-500`, `text-secondary-300` → `--p-secondary-*`
+- `bg-danger-500`, `text-success-700`, `border-warn-200` → severity palettes
+
+### Semantic Severity Colors (MANDATORY)
+
+**When a color conveys meaning (error, success, warning, info, help), always use the semantic severity palette — never raw Tailwind color names.** Semantics first, decorative later.
+
+| Use this | NOT this | When |
+|----------|----------|------|
+| `text-danger-500` | `text-red-500` | Errors, destructive actions, validation failures |
+| `bg-success-100` | `bg-green-100` | Success states, confirmations |
+| `border-warn-200` | `border-orange-200` | Warnings, caution states |
+| `text-info-600` | `text-sky-600` | Informational messages |
+| `bg-help-50` | `bg-purple-50` | Help text, hints |
+| `text-accent-500` | `text-teal-500` | Highlights, special callouts |
+
+Raw Tailwind colors (`red-*`, `green-*`, `orange-*`, `sky-*`, `purple-*`, `teal-*`) are only appropriate for purely decorative use where no semantic meaning is attached.
+
+In inline styles and `v-html`, use the CSS variables directly: `var(--p-danger-500)`, `var(--p-success-700)`, etc.
 
 Example:
 ```vue

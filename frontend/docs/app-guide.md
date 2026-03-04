@@ -674,6 +674,7 @@ if (date.isValid) {
 - **Split large pages into components** - Create focused, reusable components for better maintainability
 - **Use composables for business logic** - Extract reusable logic into composables for better code organization
 - **Use semantic CSS variables** - Prefer `var(--p-content-background)`, `var(--p-text-color)` over numbered surface vars (`bg-surface-100`). Use `color-mix()` for derived shades (e.g., `color-mix(in srgb, var(--p-primary-color) 10%, transparent)`)
+- **Use semantic severity colors** - When a color conveys meaning (error, success, warning, info, help), use `danger-*`/`success-*`/`warn-*`/`info-*`/`help-*` — never raw Tailwind names like `red-*`/`green-*`/`orange-*`. In inline styles use `var(--p-danger-500)` etc. Semantics first, decorative later
 - **Use Luxon for date handling** - Prefer Luxon over native Date methods for better internationalization and formatting
 - **Use Icon component directly** - Always use `<Icon>` tags instead of button icon props for better control
 - **Use TanStack Query for server state** - Prefer `useInfiniteQuery` for pagination over manual state management

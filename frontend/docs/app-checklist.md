@@ -263,6 +263,7 @@ Use this checklist to verify that a generated Wippy app is complete and correctl
 - [ ] Uses PrimeVue components where appropriate
 - [ ] Includes dark mode variants (`dark:` prefix)
 - [ ] Uses CSS variables for theme colors (`var(--p-*)`)
+- [ ] Severity colors use semantic names (`danger-*`, `success-*`, `warn-*`, `info-*`, `help-*`) — never raw Tailwind names (`red-*`, `green-*`, etc.) for semantic uses
 
 ### Icons
 - [ ] Uses `<Icon icon="tabler:*">` component from `@iconify/vue`

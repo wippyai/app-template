@@ -88,7 +88,7 @@ onMounted(() => {
       class="flex flex-col items-center justify-center py-12 gap-3"
       role="alert"
     >
-      <div class="text-red-500 text-sm">
+      <div class="text-danger-500 text-sm">
         {{ error }}
       </div>
       <Button
