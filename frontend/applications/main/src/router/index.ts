@@ -19,17 +19,21 @@ const routes = [
     component: () => import('../pages/users.vue'),
   },
   {
+    path: '/components',
+    name: 'components',
+    component: () => import('../pages/components.vue'),
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
     redirect: '/',
   },
 ]
 
-export function createAppRouter(host: HostApi, on: OnSubscription | null, startPath?: string): Router {
-  const router = createRouter({
-    history: createMemoryHistory(),
-    routes,
-  })
+export function createAppRouter(host: HostApi, on: OnSubscription | null, initialPath: string): Router {
+  const history = createMemoryHistory()
+  history.replace(initialPath)
+  const router = createRouter({ history, routes })
 
   router.afterEach((to) => {
     host.onRouteChanged(to.fullPath)
@@ -43,13 +47,6 @@ export function createAppRouter(host: HostApi, on: OnSubscription | null, startP
         router.push(normalized)
       }
     })
-  }
-
-  if (startPath) {
-    const normalized = startPath.startsWith('/') ? startPath : '/' + startPath
-    if (normalized !== '/') {
-      router.push(normalized)
-    }
   }
 
   return router

@@ -3,7 +3,15 @@ import vue from '@vitejs/plugin-vue'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [
+    vue({
+      template: {
+        compilerOptions: {
+          isCustomElement: (tag) => tag.startsWith('example-'),
+        },
+      },
+    }),
+  ],
   base: '',
   resolve: {
     alias: {
@@ -30,6 +38,17 @@ export default defineConfig({
         'primevue/tag',
         'primevue/dialog',
         'primevue/checkbox',
+        'primevue/inputtext',
+        'primevue/password',
+        'primevue/select',
+        'primevue/datatable',
+        'primevue/column',
+        'primevue/avatar',
+        'primevue/accordion',
+        'primevue/accordionpanel',
+        'primevue/accordionheader',
+        'primevue/accordioncontent',
+        'primevue/chip',
         'axios',
       ],
       output: {

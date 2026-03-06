@@ -167,5 +167,7 @@ entries:
         value: non-persistent
       - name: history_mode
         value: browser
+      - name: custom_css
+        value: "@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap'); body { font-family: 'Poppins', sans-serif; }"
       - name: css_variables
-        value: '{"p-primary":"#6366f1","p-primary-50":"#eef2ff","p-primary-100":"#e0e7ff","p-primary-200":"#c7d2fe","p-primary-300":"#a5b4fc","p-primary-400":"#818cf8","p-primary-500":"#6366f1","p-primary-600":"#4f46e5","p-primary-700":"#4338ca","p-primary-800":"#3730a3","p-primary-900":"#312e81","p-primary-950":"#1e1b4b"}'
+        value: '{"--p-primary":"#6366f1"}'

@@ -1,0 +1,78 @@
+{
+  "name": "@example/markdown",
+  "version": "1.0.0",
+  "specification": "wippy-component-1.0",
+  "title": "Markdown Viewer",
+  "description": "A markdown renderer demonstrating children content support, markdown-it parsing, and sanitize-html sanitization.",
+  "browser": "dist/index.js",
+  "files": [
+    "dist/",
+    "src/",
+    "package.json"
+  ],
+  "dependencies": {
+    "@wippy-fe/theme": "^0.0.12",
+    "@wippy-fe/webcomponent-core": "^0.0.12",
+    "@wippy-fe/webcomponent-vue": "^0.0.12",
+    "markdown-it": "^14.1.0",
+    "sanitize-html": "^2.14.0"
+  },
+  "devDependencies": {
+    "@types/markdown-it": "^14.1.0",
+    "@types/sanitize-html": "^2.13.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "@vitejs/plugin-vue": "^5.0.0",
+    "@wippy-fe/proxy": "^0.0.12",
+    "eslint": "^8.57.0",
+    "eslint-plugin-vue": "^9.0.0",
+    "typescript": "^5.0.0",
+    "vite": "^6.0.0",
+    "vue": "^3.5.0",
+    "vue-eslint-parser": "^9.4.3",
+    "vue-tsc": "^2.0.0"
+  },
+  "peerDependencies": {
+    "@wippy-fe/proxy": "^0.0.12",
+    "vue": "^3.5.0"
+  },
+  "wippy": {
+    "tagName": "example-markdown",
+    "type": "widget",
+    "props": {
+      "type": "object",
+      "properties": {
+        "content": {
+          "type": "string",
+          "default": "",
+          "description": "Markdown text to render"
+        },
+        "allowed-tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Override sanitization tag whitelist (empty = use built-in defaults)"
+        },
+        "allowed-attributes": {
+          "type": "string",
+          "default": "",
+          "description": "JSON object of tag→attributes mappings for sanitize-html"
+        }
+      }
+    },
+    "scripts": {
+      "build": "build",
+      "debug": "build:debug",
+      "test": "lint"
+    }
+  },
+  "scripts": {
+    "build": "vite build",
+    "build:debug": "vite build --mode development",
+    "dev": "vite build --watch",
+    "lint": "eslint src --ext .ts,.vue",
+    "lint:fix": "eslint src --ext .ts,.vue --fix"
+  }
+}
