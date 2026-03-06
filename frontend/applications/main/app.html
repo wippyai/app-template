@@ -38,7 +38,13 @@
     </script>
 </head>
 <body>
-    <div id="app"></div>
+    <div id="app">
+        <div style="display:flex;align-items:center;justify-content:center;height:100vh;gap:12px;font-family:system-ui,-apple-system,sans-serif;color:rgba(128,128,128,0.6)">
+            <svg width="20" height="20" viewBox="0 0 20 20" style="animation:app-spin .7s linear infinite"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.5" opacity=".2"/><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="36 14" stroke-linecap="round"/></svg>
+            <span style="font-size:13px">Loading...</span>
+            <style>@keyframes app-spin{to{transform:rotate(360deg)}}</style>
+        </div>
+    </div>
     <script type="module" src="./src/app.ts"></script>
 </body>
 </html>
