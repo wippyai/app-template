@@ -37,7 +37,7 @@ wippy run -c
 
 ### Wippy Web Host
 
-The **Web Host** is a set of JS/CSS/HTML modules served from a CDN (e.g., `https://web-host.wippy.ai/webcomponents-1.0.11/`). It provides:
+The **Web Host** is a set of JS/CSS/HTML modules served from a CDN (e.g., `https://web-host.wippy.ai/webcomponents-1.0.12/`). It provides:
 
 - **Chat UI** — conversation interface with AI agents
 - **Navigation** — left sidebar with page links, user menu
@@ -280,10 +280,10 @@ Pages like `static/login.html` are outside the Web Host. Two approaches:
 
 **Simple pages: CDN imports.** For trivial static pages (like a basic login form), import theme CSS directly:
 1. Import CSS via CDN URLs:
-   - `https://web-host.wippy.ai/webcomponents-1.0.11/@wippy-fe/assets/theme-config.css` — theme variables
-   - `https://web-host.wippy.ai/webcomponents-1.0.11/@wippy-fe/assets/preflight.css` — Tailwind reset (normalizes form elements)
-   - `https://web-host.wippy.ai/webcomponents-1.0.11/@wippy-fe/assets/tailwind.css` — PrimeVue component styles
-   - `https://web-host.wippy.ai/webcomponents-1.0.11/@wippy-fe/assets/iframe.css` — scrollbar styling
+   - `https://web-host.wippy.ai/webcomponents-1.0.12/@wippy-fe/assets/theme-config.css` — theme variables
+   - `https://web-host.wippy.ai/webcomponents-1.0.12/@wippy-fe/assets/preflight.css` — Tailwind reset (normalizes form elements)
+   - `https://web-host.wippy.ai/webcomponents-1.0.12/@wippy-fe/assets/tailwind.css` — PrimeVue component styles
+   - `https://web-host.wippy.ai/webcomponents-1.0.12/@wippy-fe/assets/iframe.css` — scrollbar styling
 2. Use PrimeVue CSS classes on raw HTML elements (`p-inputtext`, `p-button`, `p-card`, etc.)
 3. Add the same CSS variable overrides as a `<style>` block after the imports.
 
