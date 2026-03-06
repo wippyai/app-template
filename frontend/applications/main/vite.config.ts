@@ -12,7 +12,7 @@ export default defineConfig({
       },
     }),
   ],
-  base: '',
+  base: '/app/main/',
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),

@@ -6,8 +6,8 @@ modules:
       version: 0.4.1
       hash: c154e2cc11ca94ddd368307aced96cfbbd411a58e74e46339d50b4a9befc1d65
     - name: userspace/uploads
-      version: 0.4.8
-      hash: c1d6a296f9f124b1ccafb015669a1b456a754e94272ac22e8b3f617fa7a5abe0
+      version: 0.4.11
+      hash: 81f42662f4cb524d3a5d26f99fc1cf23b6f92a78133db33b2116b039279b7158
     - name: userspace/users
       version: 0.1.3
       hash: 8337910ea45d649bbb11992800a537448cfb8c28036ed2931665204f47f0daae
@@ -18,14 +18,14 @@ modules:
       version: 0.3.12
       hash: 2b6d8eba7b46ef900024d3a7dbf06bd560fad645b8b2ac6296e2a8bad42f60b9
     - name: wippy/dataflow
-      version: 0.4.1
-      hash: 0f1a47b496e0fb61114ca1c5f915958e3326eb0b79fd035e3bf356407ca10c52
+      version: 0.4.3
+      hash: 5469a66b5aa86d57d6dc7d8e95cefbb36624e9a54d4cfec52fc150850fbbf6b4
     - name: wippy/facade
-      version: 0.5.25
-      hash: e6d38b49b392e4af8c518589ed2dde99191642fde57313f73e8fe9841d2c2fa7
+      version: 0.5.27
+      hash: 84a2cc4d72543ad539b892ba3b9cc3038c144a1c0822deece447e3b2d678cfd1
     - name: wippy/llm
-      version: 0.4.7
-      hash: 2e55afcf55c441a8e79e3737691e5721d06138b9a3a46c7fb87199db6a5dd426
+      version: 0.4.9
+      hash: d6a1d6d283f4c4a40a685910b1a2f0fe322692302672fed74263ee04bef916d4
     - name: wippy/migration
       version: 0.3.15
       hash: b675a9dd0bf83a48ecb696cc27ec7a9173e54c3431da89121d865751e26330d0
@@ -42,13 +42,13 @@ modules:
       version: 0.4.2
       hash: 34b99aac2eba9c5016fd02c783117fb2b0381ce14696c7b199265458b99a3271
     - name: wippy/test
-      version: 0.4.11
-      hash: 235f2f1d222dabeec1a83f6f9f48a7f75abf2143860b833437c1d96da3cd3e95
+      version: 0.4.12
+      hash: 23ccac1d11dbaf13d05ec0400e19189b435b892a4a18e95e69f49a22f1ceb99b
     - name: wippy/usage
       version: 0.3.20
       hash: 0fa127a8ff287f99816d97f34f1b897df6bd031fd392d93f65130f88656ca646
     - name: wippy/views
-      version: 0.4.22
-      hash: 7b336b0c47f6181706c52a5a177de11935465b5cc7211130a29353fc8a7b245f
+      version: 0.4.25
+      hash: c5d409424e328cf26cd5ba7394829888642dd809d0a7e2c0ffce41291c927751
 options:
     unpack_modules: true

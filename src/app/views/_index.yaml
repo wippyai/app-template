@@ -13,7 +13,7 @@ entries:
       announced: true
       secure: false
       url: /app
-      base_path: app/main
+      base_path: main
       entry_point: app.html
     proxy:
       enabled: true

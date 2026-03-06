@@ -3,7 +3,7 @@
 build: build-app-main build-wc-reaction-bar build-wc-websocket-log build-wc-chart-circle build-wc-mermaid build-wc-markdown build-wc-model-gallery
 
 build-app-main:
-	cd frontend/applications/main && npm install && npm run build -- --outDir ../../../static/app/main --emptyOutDir
+	cd frontend/applications/main && npm install && npm run build -- --outDir ../../../static/main --emptyOutDir
 
 build-wc-reaction-bar:
 	cd frontend/web-components/reaction-bar && npm install && npm run build -- --outDir ../../../static/wc/reaction-bar --emptyOutDir
