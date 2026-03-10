@@ -1,6 +1,6 @@
-.PHONY: build dev run lint build-app-main build-wc-reaction-bar build-wc-websocket-log build-wc-chart-circle build-wc-mermaid build-wc-markdown build-wc-model-gallery
+.PHONY: build dev run lint build-app-main build-wc-reaction-bar build-wc-websocket-log build-wc-chart-circle build-wc-mermaid build-wc-markdown build-wc-model-gallery build-wc-counter-persist
 
-build: build-app-main build-wc-reaction-bar build-wc-websocket-log build-wc-chart-circle build-wc-mermaid build-wc-markdown build-wc-model-gallery
+build: build-app-main build-wc-reaction-bar build-wc-websocket-log build-wc-chart-circle build-wc-mermaid build-wc-markdown build-wc-model-gallery build-wc-counter-persist
 
 build-app-main:
 	cd frontend/applications/main && npm install && npm run build -- --outDir ../../../static/app/main --emptyOutDir
@@ -23,6 +23,9 @@ build-wc-markdown:
 build-wc-model-gallery:
 	cd frontend/web-components/model-gallery && npm install && npm run build -- --outDir ../../../static/wc/model-gallery --emptyOutDir
 
+build-wc-counter-persist:
+	cd frontend/web-components/counter-persist && npm install && npm run build -- --outDir ../../../static/wc/counter-persist --emptyOutDir
+
 lint:
 	cd frontend/web-components/reaction-bar && npm run lint
 	cd frontend/web-components/websocket-log && npm run lint
@@ -30,6 +33,7 @@ lint:
 	cd frontend/web-components/mermaid && npm run lint
 	cd frontend/web-components/markdown && npm run lint
 	cd frontend/web-components/model-gallery && npm run lint
+	cd frontend/web-components/counter-persist && npm run lint
 
 dev:
 	cd frontend/applications/main && npm run dev

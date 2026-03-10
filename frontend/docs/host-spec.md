@@ -329,6 +329,8 @@ For the specification **wippy-component-v1** the following libraries are provide
 | `@tanstack/query-core` | Query core | 5.69.0 |
 
 > **Note:** `nanoevents` and `luxon` are provided by the host import map for convenience, but components are not required to use them. Only `vue`, `pinia`, `@iconify/vue`, and `@wippy-fe/proxy` are required externals that every component must declare.
+>
+> **`@wippy-fe/pinia-persist`** (v0.0.13) is an npm package but is **NOT** on the CDN import map. It must be bundled into your component — do not add it to `rollupOptions.external`.
 
 > **⚠︎  Do not bundle required external libraries** – always import them directly and rely on the host import-map:
 >

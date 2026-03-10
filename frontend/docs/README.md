@@ -7,6 +7,7 @@ Wippy uses a **host-based architecture**. The web host application provides:
 - Page display and navigation
 - Theme and CSS injection into child content
 - WebSocket relay for real-time features
+- Host-mediated state persistence for child content (survives iframe reloads)
 
 Child content runs inside the host in two forms:
 

@@ -6,6 +6,7 @@ import Chip from 'primevue/chip'
 // Track events from components for display
 const reactionEvents = ref<Array<{ emoji: string; active: boolean; time: string }>>([])
 const modelEvents = ref<Array<{ name: string; provider: string; time: string }>>([])
+const counterEvents = ref<Array<{ count: number; time: string }>>([])
 
 function onReaction(e: Event) {
   const detail = (e as CustomEvent).detail
@@ -15,6 +16,15 @@ function onReaction(e: Event) {
     time: new Date().toLocaleTimeString(),
   })
   if (reactionEvents.value.length > 5) reactionEvents.value.pop()
+}
+
+function onCountChanged(e: Event) {
+  const detail = (e as CustomEvent).detail
+  counterEvents.value.unshift({
+    count: detail.count,
+    time: new Date().toLocaleTimeString(),
+  })
+  if (counterEvents.value.length > 5) counterEvents.value.pop()
 }
 
 function onModelSelected(e: Event) {
@@ -109,6 +119,47 @@ const emit = useComponentEvents()
           >
             <span class="text-surface-400">{{ ev.time }}</span>
             &nbsp;{{ ev.emoji }} &rarr; {{ ev.active ? 'active' : 'inactive' }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Counter Persist -->
+      <div class="p-card p-component rounded-lg p-4">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10 text-primary shrink-0">
+            <Icon icon="tabler:database" class="w-[18px] h-[18px]" aria-hidden="true" />
+          </div>
+          <div>
+            <h2 class="text-sm font-semibold text-surface-900 dark:text-surface-0">Counter Persist</h2>
+            <code class="text-[10px] text-surface-400 font-mono">&lt;example-counter-persist&gt;</code>
+          </div>
+          <div class="flex items-center gap-1.5 ml-auto">
+            <Chip label="State Persist" class="text-[10px]" />
+            <Chip label="Pinia" class="text-[10px]" />
+          </div>
+        </div>
+        <p class="text-xs text-surface-500 dark:text-surface-400 mb-4">
+          Counter with Pinia state persistence via @wippy-fe/pinia-persist. State survives iframe reloads. Two instances with different persist-key props maintain separate state.
+        </p>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div>
+            <div class="text-[11px] font-medium text-surface-400 uppercase tracking-wider mb-2">Instance A (persist-key="a")</div>
+            <example-counter-persist persist-key="a" @count-changed="onCountChanged"></example-counter-persist>
+          </div>
+          <div>
+            <div class="text-[11px] font-medium text-surface-400 uppercase tracking-wider mb-2">Instance B (persist-key="b")</div>
+            <example-counter-persist persist-key="b" @count-changed="onCountChanged"></example-counter-persist>
+          </div>
+        </div>
+        <div v-if="counterEvents.length" class="mt-3 space-y-1">
+          <div class="text-[11px] font-medium text-surface-400 uppercase tracking-wider mb-1">Recent Events</div>
+          <div
+            v-for="(ev, i) in counterEvents"
+            :key="i"
+            class="text-xs font-mono text-surface-600 dark:text-surface-400"
+          >
+            <span class="text-surface-400">{{ ev.time }}</span>
+            &nbsp;count &rarr; {{ ev.count }}
           </div>
         </div>
       </div>

@@ -50,6 +50,8 @@ export default defineConfig({
         'primevue/accordioncontent',
         'primevue/chip',
         'axios',
+        '@tanstack/vue-query',
+        '@tanstack/query-core',
       ],
       output: {
         entryFileNames: '[name].js',

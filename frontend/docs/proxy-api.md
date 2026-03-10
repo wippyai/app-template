@@ -10,13 +10,14 @@ To integrate with Wippy, use the `getWippyApi()` promise or the `$W` global vari
 
 ```typescript
 // Using getWippyApi()
-const { config, host, api, on } = await getWippyApi()
+const { config, host, api, on, state } = await getWippyApi()
 
 // Or use the $W global for individual access
 const config = await $W.config()
 const host = await $W.host()
 const api = await $W.api()
 const on = await $W.on()
+const state = await $W.state()
 const instance = await $W.instance() // Full ProxyApiInstance
 ```
 
@@ -27,6 +28,7 @@ The initialization returns the following components:
 3. `api` - Authenticated axios instance with automatic auth token injection
 4. `on` - Subscription to real-time events from WebSocket layer
 5. `loadWebComponent` - Function to dynamically load other web components
+6. `state` - Host-mediated state persistence (survives iframe destruction)
 
 ---
 
@@ -296,6 +298,16 @@ on('@message', (message) => {
 })
 ```
 
+### @state-error
+
+Emitted when a state save operation fails (e.g., quota exceeded).
+
+```typescript
+on('@state-error', ({ error, key }) => {
+  console.warn(`State save failed for "${key}": ${error}`)
+})
+```
+
 ### Topic Patterns
 
 Colon-separated parts with `*` wildcard matching:
@@ -318,6 +330,83 @@ on('session:abc-123:message:*', (event) => {
 // If topic parts contain ":" characters, encode them
 on('session:' + encodeURIComponent('id:with:colons') + ':message:*', (event) => {
   console.log('Message event:', event)
+})
+```
+
+---
+
+## state Object
+
+The `state` object provides host-mediated key-value storage that persists across iframe reloads. Scoped automatically per page/artifact UUID.
+
+All methods accept an optional `options` parameter with a `scope` field to override the default page-level scope. This is used by web components with `persist-key` or nested artifacts to isolate state per instance.
+
+### state.get
+
+```typescript
+state.get<T = unknown>(key: string, options?: { scope?: string }): Promise<T | null>
+```
+
+Retrieves a previously saved value. Returns `null` if not found.
+
+### state.set
+
+```typescript
+state.set(key: string, value: unknown, options?: { scope?: string }): Promise<void>
+```
+
+Saves a JSON-serializable value. Resolves immediately without waiting for host acknowledgment. If quota is exceeded, a `@state-error` event is emitted asynchronously.
+
+### state.remove
+
+```typescript
+state.remove(key: string, options?: { scope?: string }): Promise<void>
+```
+
+Removes a single key from this page's state.
+
+### state.clear
+
+```typescript
+state.clear(options?: { scope?: string }): Promise<void>
+```
+
+Removes all state for this page/scope.
+
+### state.getAll
+
+```typescript
+state.getAll(options?: { scope?: string }): Promise<Record<string, unknown>>
+```
+
+Returns all saved state as a flat object. Useful for bulk hydration.
+
+### Scope
+
+By default, state is scoped to the page/artifact UUID (set by the host). The `scope` option overrides this, allowing multiple instances of the same component to maintain separate state.
+
+> **WARNING:** Scope values must be **globally unique** across your application. If two unrelated components use the same scope string, their state will collide. Use descriptive, namespaced keys (e.g., `my-app:sidebar-counter`, `dashboard:filter-panel`).
+>
+> When using `@wippy-fe/pinia-persist`, custom scopes are automatically prefixed with `@custom:` to prevent collisions with system scopes (page/artifact UUIDs). The raw `state` API passes scope values as-is — if using it directly, you must manage namespacing yourself.
+
+### Example: Caching API Data
+
+```typescript
+const { state, on } = await getWippyApi()
+
+// Restore cached data on mount, fall back to API
+const cached = await state.get<User[]>('users')
+if (cached) {
+  users.value = cached
+} else {
+  const { data } = await api.get('/api/v1/users')
+  users.value = data.users
+  await state.set('users', users.value)
+}
+
+// Save when page goes to background
+on('@visibility', (visible) => {
+  if (!visible) state.set('users', users.value)
 })
 ```
 

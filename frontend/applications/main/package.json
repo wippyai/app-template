@@ -4,7 +4,11 @@
   "specification": "wippy-component-1.0",
   "title": "Wippy App",
   "description": "Main application page for Wippy platform",
-  "files": ["dist/", "src/", "package.json"],
+  "files": [
+    "dist/",
+    "src/",
+    "package.json"
+  ],
   "browser": "dist/app.js",
   "wippy": {
     "type": "page",
@@ -41,11 +45,13 @@
     "type-check": "vue-tsc --build --force"
   },
   "dependencies": {
-    "@wippy-fe/theme": "^0.0.12"
+    "@wippy-fe/theme": "^0.0.14"
   },
   "devDependencies": {
-    "@wippy-fe/types-global-proxy": "^0.0.12",
+    "@tanstack/query-core": "^5.90.20",
+    "@tanstack/vue-query": "^5.92.9",
     "@vitejs/plugin-vue": "^5.0.0",
+    "@wippy-fe/types-global-proxy": "^0.0.14",
     "autoprefixer": "^10.4.0",
     "postcss": "^8.4.0",
     "primevue": "^4.3.3",
@@ -58,7 +64,9 @@
   },
   "peerDependencies": {
     "@iconify/vue": "^5.0.0",
-    "@wippy-fe/proxy": "^0.0.12",
+    "@tanstack/vue-query": "^5.69.0",
+    "@wippy-fe/pinia-persist": "^0.0.14",
+    "@wippy-fe/proxy": "^0.0.14",
     "axios": "^1.0.0",
     "luxon": "^3.5.0",
     "pinia": "^2.1.0",

@@ -178,6 +178,34 @@ entries:
             default: ""
             description: JSON object of tag→attributes mappings for sanitize-html
 
+  - name: counter-persist
+    kind: registry.entry
+    meta:
+      type: view.component
+      name: counter-persist
+      title: Counter Persist
+      tag_name: example-counter-persist
+      entry_point: index.js
+      announced: true
+      secure: false
+      auto_register: true
+      url: /app/wc/counter-persist
+      props:
+        type: object
+        properties:
+          persist-key:
+            type: string
+            description: Key prefix for state persistence. Different keys = separate state.
+      events:
+        type: object
+        properties:
+          count-changed:
+            type: object
+            properties:
+              count:
+                type: number
+            description: Fired when count value changes
+
   - name: model-gallery
     kind: registry.entry
     meta:

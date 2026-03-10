@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
+import { useQuery, useQueryClient, useMutation } from '@tanstack/vue-query'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import Dialog from 'primevue/dialog'
@@ -12,9 +13,32 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Avatar from 'primevue/avatar'
 import { useApi, useHost } from '../composables/useWippy'
+import { useUsersStore } from '../stores/users'
+import type { User } from '../stores/users'
 
 const api = useApi()
 const host = useHost()
+const queryClient = useQueryClient()
+const usersStore = useUsersStore()
+
+const USERS_KEY = ['users'] as const
+
+const { data: users, isPending, isError } = useQuery({
+  queryKey: USERS_KEY,
+  queryFn: async () => {
+    const { data } = await api.get('/api/v1/users')
+    if (data.success)
+      return (data.users || []) as User[]
+    return [] as User[]
+  },
+  placeholderData: () => usersStore.list.length > 0 ? usersStore.list : undefined,
+})
+
+// Sync query results back to Pinia for persistence
+watch(users, (val) => {
+  if (val)
+    usersStore.list = val
+})
 
 const STATUS_OPTIONS = [
   { label: 'Active', value: 'active' },
@@ -23,22 +47,10 @@ const STATUS_OPTIONS = [
   { label: 'Pending', value: 'pending' },
 ]
 
-interface User {
-  user_id: string
-  email: string
-  full_name: string
-  status: string
-  security_groups: string[]
-  created_at: number
-}
-
 const SECURITY_GROUPS = [
   { id: 'app.security:admin', label: 'Admin' },
   { id: 'app.security:user', label: 'User' },
 ]
-
-const users = ref<User[]>([])
-const loading = ref(false)
 
 const showCreate = ref(false)
 const createForm = ref({ email: '', full_name: '', password: '', groups: ['app.security:user'] as string[] })
@@ -74,42 +86,36 @@ function userInitial(user: User): string {
   return (user.full_name || user.email).charAt(0).toUpperCase()
 }
 
-async function fetchUsers() {
-  loading.value = true
-  try {
-    const { data } = await api.get('/api/v1/users')
-    if (data.success) {
-      users.value = data.users || []
-    }
-  } catch {
-    users.value = []
-  } finally {
-    loading.value = false
-  }
-}
-
-async function createUser() {
-  if (!createForm.value.email || !createForm.value.password) return
-  try {
+const createMutation = useMutation({
+  mutationFn: async (form: typeof createForm.value) => {
     const { data } = await api.post('/api/v1/users', {
-      email: createForm.value.email,
-      full_name: createForm.value.full_name,
-      password: createForm.value.password,
+      email: form.email,
+      full_name: form.full_name,
+      password: form.password,
     })
     if (data.success && data.user) {
-      if (createForm.value.groups.length > 0) {
+      if (form.groups.length > 0) {
         await api.put(`/api/v1/users/${data.user.user_id}/groups`, {
-          groups: createForm.value.groups,
+          groups: form.groups,
         })
       }
-      createForm.value = { email: '', full_name: '', password: '', groups: ['app.security:user'] }
-      showCreate.value = false
-      host.toast({ severity: 'success', summary: 'User created' })
-      await fetchUsers()
     }
-  } catch {
+    return data
+  },
+  onSuccess: () => {
+    createForm.value = { email: '', full_name: '', password: '', groups: ['app.security:user'] }
+    showCreate.value = false
+    host.toast({ severity: 'success', summary: 'User created' })
+    queryClient.invalidateQueries({ queryKey: USERS_KEY })
+  },
+  onError: () => {
     host.toast({ severity: 'error', summary: 'Failed to create user' })
-  }
+  },
+})
+
+function createUser() {
+  if (!createForm.value.email || !createForm.value.password) return
+  createMutation.mutate(createForm.value)
 }
 
 function openEdit(user: User) {
@@ -124,26 +130,45 @@ function openEdit(user: User) {
   showEdit.value = true
 }
 
-async function saveUser() {
-  const userId = editForm.value.user_id
-  if (!userId) return
-  try {
+const saveMutation = useMutation({
+  mutationFn: async (form: typeof editForm.value) => {
     const updateData: Record<string, string> = {}
-    if (editForm.value.email) updateData.email = editForm.value.email
-    if (editForm.value.full_name) updateData.full_name = editForm.value.full_name
-    if (editForm.value.status) updateData.status = editForm.value.status
-    if (editForm.value.password) updateData.password = editForm.value.password
+    if (form.email) updateData.email = form.email
+    if (form.full_name) updateData.full_name = form.full_name
+    if (form.status) updateData.status = form.status
+    if (form.password) updateData.password = form.password
 
-    await api.put(`/api/v1/users/${userId}`, updateData)
-    await api.put(`/api/v1/users/${userId}/groups`, { groups: editForm.value.groups })
-
+    await api.put(`/api/v1/users/${form.user_id}`, updateData)
+    await api.put(`/api/v1/users/${form.user_id}/groups`, { groups: form.groups })
+  },
+  onSuccess: () => {
     showEdit.value = false
     host.toast({ severity: 'success', summary: 'User updated' })
-    await fetchUsers()
-  } catch {
+    queryClient.invalidateQueries({ queryKey: USERS_KEY })
+  },
+  onError: () => {
     host.toast({ severity: 'error', summary: 'Failed to update user' })
-  }
+  },
+})
+
+function saveUser() {
+  if (!editForm.value.user_id) return
+  saveMutation.mutate(editForm.value)
 }
+
+const deleteMutation = useMutation({
+  mutationFn: async (user: User) => {
+    const { data } = await api.delete(`/api/v1/users/${user.user_id}`)
+    return data
+  },
+  onSuccess: () => {
+    host.toast({ severity: 'success', summary: 'User deleted' })
+    queryClient.invalidateQueries({ queryKey: USERS_KEY })
+  },
+  onError: () => {
+    host.toast({ severity: 'error', summary: 'Failed to delete user' })
+  },
+})
 
 async function confirmDelete(user: User) {
   const name = user.full_name || user.email
@@ -161,22 +186,9 @@ async function confirmDelete(user: User) {
     acceptProps: { severity: 'danger' },
     rejectProps: { severity: 'secondary', text: true },
   })
-  if (confirmed) await executeDelete(user)
+  if (confirmed)
+    deleteMutation.mutate(user)
 }
-
-async function executeDelete(user: User) {
-  try {
-    const { data } = await api.delete(`/api/v1/users/${user.user_id}`)
-    if (data.success) {
-      host.toast({ severity: 'success', summary: 'User deleted' })
-      await fetchUsers()
-    }
-  } catch {
-    host.toast({ severity: 'error', summary: 'Failed to delete user' })
-  }
-}
-
-onMounted(fetchUsers)
 </script>
 
 <template>
@@ -189,7 +201,7 @@ onMounted(fetchUsers)
           </div>
           <div>
             <h1 class="text-sm font-semibold text-surface-900 dark:text-surface-0">Users</h1>
-            <p class="text-[11px] text-surface-400">{{ users.length }} user{{ users.length !== 1 ? 's' : '' }}</p>
+            <p class="text-[11px] text-surface-400">{{ (users ?? []).length }} user{{ (users ?? []).length !== 1 ? 's' : '' }}</p>
           </div>
         </div>
         <Button label="Create User" size="small" @click="showCreate = true">
@@ -199,10 +211,18 @@ onMounted(fetchUsers)
     </div>
 
     <div class="flex-1 overflow-y-auto">
+      <div v-if="isError" class="h-full flex items-center justify-center">
+        <div class="text-center">
+          <Icon icon="tabler:alert-circle" class="w-10 h-10 text-red-400 mx-auto mb-2" aria-hidden="true" />
+          <p class="text-sm text-surface-400 mb-3">Failed to load users</p>
+          <Button label="Retry" size="small" @click="() => queryClient.invalidateQueries({ queryKey: USERS_KEY })" />
+        </div>
+      </div>
+
       <DataTable
-        v-if="users.length > 0"
-        :value="users"
-        :loading="loading"
+        v-else-if="(users ?? []).length > 0"
+        :value="users ?? []"
+        :loading="isPending"
         dataKey="user_id"
         :pt="{ bodyRow: { class: 'group' } }"
         class="text-sm"
@@ -269,7 +289,7 @@ onMounted(fetchUsers)
         </Column>
       </DataTable>
 
-      <div v-else-if="!loading" class="h-full flex items-center justify-center">
+      <div v-else-if="!isPending" class="h-full flex items-center justify-center">
         <div class="text-center">
           <Icon icon="tabler:users" class="w-10 h-10 text-surface-300 dark:text-surface-600 mx-auto mb-2" aria-hidden="true" />
           <p class="text-sm text-surface-400 mb-3">No users yet</p>
@@ -306,7 +326,7 @@ onMounted(fetchUsers)
       <template #footer>
         <div class="flex justify-end gap-2">
           <Button label="Cancel" severity="secondary" text @click="showCreate = false" />
-          <Button label="Create" @click="createUser" :disabled="!createForm.email" />
+          <Button label="Create" @click="createUser" :disabled="!createForm.email || createMutation.isPending.value" :loading="createMutation.isPending.value" />
         </div>
       </template>
     </Dialog>
@@ -343,7 +363,7 @@ onMounted(fetchUsers)
       <template #footer>
         <div class="flex justify-end gap-2">
           <Button label="Cancel" severity="secondary" text @click="showEdit = false" />
-          <Button label="Save" @click="saveUser" />
+          <Button label="Save" @click="saveUser" :disabled="saveMutation.isPending.value" :loading="saveMutation.isPending.value" />
         </div>
       </template>
     </Dialog>
