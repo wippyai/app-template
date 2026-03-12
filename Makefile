@@ -27,6 +27,7 @@ build-wc-counter-persist:
 	cd frontend/web-components/counter-persist && npm install && npm run build -- --outDir ../../../static/wc/counter-persist --emptyOutDir
 
 lint:
+	cd frontend/applications/main && npm run lint
 	cd frontend/web-components/reaction-bar && npm run lint
 	cd frontend/web-components/websocket-log && npm run lint
 	cd frontend/web-components/chart-circle && npm run lint

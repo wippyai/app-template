@@ -197,25 +197,56 @@ async function confirmDelete(user: User) {
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-primary">
-            <Icon icon="tabler:users" class="w-5 h-5 text-primary-contrast" aria-hidden="true" />
+            <Icon
+              icon="tabler:users"
+              class="w-5 h-5 text-primary-contrast"
+              aria-hidden="true"
+            />
           </div>
           <div>
-            <h1 class="text-sm font-semibold text-surface-900 dark:text-surface-0">Users</h1>
-            <p class="text-[11px] text-surface-400">{{ (users ?? []).length }} user{{ (users ?? []).length !== 1 ? 's' : '' }}</p>
+            <h1 class="text-sm font-semibold text-surface-900 dark:text-surface-0">
+              Users
+            </h1>
+            <p class="text-[11px] text-surface-400">
+              {{ (users ?? []).length }} user{{ (users ?? []).length !== 1 ? 's' : '' }}
+            </p>
           </div>
         </div>
-        <Button label="Create User" size="small" @click="showCreate = true">
-          <template #icon><Icon icon="tabler:plus" class="w-4 h-4" aria-hidden="true" /></template>
+        <Button
+          label="Create User"
+          size="small"
+          @click="showCreate = true"
+        >
+          <template #icon>
+            <Icon
+              icon="tabler:plus"
+              class="w-4 h-4"
+              aria-hidden="true"
+            />
+          </template>
         </Button>
       </div>
     </div>
 
     <div class="flex-1 overflow-y-auto">
-      <div v-if="isError" class="h-full flex items-center justify-center">
+      <div
+        v-if="isError"
+        class="h-full flex items-center justify-center"
+      >
         <div class="text-center">
-          <Icon icon="tabler:alert-circle" class="w-10 h-10 text-red-400 mx-auto mb-2" aria-hidden="true" />
-          <p class="text-sm text-surface-400 mb-3">Failed to load users</p>
-          <Button label="Retry" size="small" @click="() => queryClient.invalidateQueries({ queryKey: USERS_KEY })" />
+          <Icon
+            icon="tabler:alert-circle"
+            class="w-10 h-10 text-red-400 mx-auto mb-2"
+            aria-hidden="true"
+          />
+          <p class="text-sm text-surface-400 mb-3">
+            Failed to load users
+          </p>
+          <Button
+            label="Retry"
+            size="small"
+            @click="() => queryClient.invalidateQueries({ queryKey: USERS_KEY })"
+          />
         </div>
       </div>
 
@@ -223,27 +254,48 @@ async function confirmDelete(user: User) {
         v-else-if="(users ?? []).length > 0"
         :value="users ?? []"
         :loading="isPending"
-        dataKey="user_id"
+        data-key="user_id"
         :pt="{ bodyRow: { class: 'group' } }"
         class="text-sm"
       >
-        <Column header="User" field="full_name">
+        <Column
+          header="User"
+          field="full_name"
+        >
           <template #body="{ data: user }">
             <div class="flex items-center gap-3">
-              <Avatar :label="userInitial(user)" shape="circle" class="bg-primary/10 text-primary text-xs font-semibold" />
+              <Avatar
+                :label="userInitial(user)"
+                shape="circle"
+                class="bg-primary/10 text-primary text-xs font-semibold"
+              />
               <div class="min-w-0">
-                <div class="text-surface-900 dark:text-surface-0 font-medium truncate">{{ user.full_name || '-' }}</div>
-                <div class="text-[11px] text-surface-400 truncate">{{ user.email }}</div>
+                <div class="text-surface-900 dark:text-surface-0 font-medium truncate">
+                  {{ user.full_name || '-' }}
+                </div>
+                <div class="text-[11px] text-surface-400 truncate">
+                  {{ user.email }}
+                </div>
               </div>
             </div>
           </template>
         </Column>
-        <Column header="Status" field="status">
+        <Column
+          header="Status"
+          field="status"
+        >
           <template #body="{ data: user }">
-            <Tag :value="user.status" :severity="statusSeverity(user.status)" class="text-[10px]" />
+            <Tag
+              :value="user.status"
+              :severity="statusSeverity(user.status)"
+              class="text-[10px]"
+            />
           </template>
         </Column>
-        <Column header="Groups" field="security_groups">
+        <Column
+          header="Groups"
+          field="security_groups"
+        >
           <template #body="{ data: user }">
             <div class="flex flex-wrap gap-1">
               <Tag
@@ -253,70 +305,148 @@ async function confirmDelete(user: User) {
                 :severity="groupSeverity(g)"
                 class="text-[10px]"
               />
-              <span v-if="user.security_groups.length === 0" class="text-xs text-surface-400">None</span>
+              <span
+                v-if="user.security_groups.length === 0"
+                class="text-xs text-surface-400"
+              >None</span>
             </div>
           </template>
         </Column>
-        <Column header="Created" field="created_at">
+        <Column
+          header="Created"
+          field="created_at"
+        >
           <template #body="{ data: user }">
             <span class="text-xs text-surface-400">{{ formatDate(user.created_at) }}</span>
           </template>
         </Column>
-        <Column headerStyle="width: 6rem">
+        <Column header-style="width: 6rem">
           <template #body="{ data: user }">
             <div class="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
               <Button
                 text
                 rounded
                 class="!p-1.5"
-                @click.stop="openEdit(user)"
                 :aria-label="`Edit ${user.full_name || user.email}`"
+                @click.stop="openEdit(user)"
               >
-                <template #icon><Icon icon="tabler:edit" class="w-4 h-4" aria-hidden="true" /></template>
+                <template #icon>
+                  <Icon
+                    icon="tabler:edit"
+                    class="w-4 h-4"
+                    aria-hidden="true"
+                  />
+                </template>
               </Button>
               <Button
                 text
                 rounded
                 severity="danger"
                 class="!p-1.5"
-                @click.stop="confirmDelete(user)"
                 :aria-label="`Delete ${user.full_name || user.email}`"
+                @click.stop="confirmDelete(user)"
               >
-                <template #icon><Icon icon="tabler:trash" class="w-4 h-4" aria-hidden="true" /></template>
+                <template #icon>
+                  <Icon
+                    icon="tabler:trash"
+                    class="w-4 h-4"
+                    aria-hidden="true"
+                  />
+                </template>
               </Button>
             </div>
           </template>
         </Column>
       </DataTable>
 
-      <div v-else-if="!isPending" class="h-full flex items-center justify-center">
+      <div
+        v-else-if="!isPending"
+        class="h-full flex items-center justify-center"
+      >
         <div class="text-center">
-          <Icon icon="tabler:users" class="w-10 h-10 text-surface-300 dark:text-surface-600 mx-auto mb-2" aria-hidden="true" />
-          <p class="text-sm text-surface-400 mb-3">No users yet</p>
-          <Button label="Create your first user" size="small" @click="showCreate = true" />
+          <Icon
+            icon="tabler:users"
+            class="w-10 h-10 text-surface-300 dark:text-surface-600 mx-auto mb-2"
+            aria-hidden="true"
+          />
+          <p class="text-sm text-surface-400 mb-3">
+            No users yet
+          </p>
+          <Button
+            label="Create your first user"
+            size="small"
+            @click="showCreate = true"
+          />
         </div>
       </div>
     </div>
 
-    <Dialog v-model:visible="showCreate" header="Create User" :style="{ width: '460px' }" modal>
-      <form @submit.prevent="createUser" class="space-y-4">
+    <Dialog
+      v-model:visible="showCreate"
+      header="Create User"
+      :style="{ width: '460px' }"
+      modal
+    >
+      <form
+        class="space-y-4"
+        @submit.prevent="createUser"
+      >
         <div>
-          <label for="create-email" class="block mb-1 text-xs font-medium text-muted-color">Email</label>
-          <InputText id="create-email" v-model="createForm.email" type="email" placeholder="user@example.com" fluid />
+          <label
+            for="create-email"
+            class="block mb-1 text-xs font-medium text-muted-color"
+          >Email</label>
+          <InputText
+            id="create-email"
+            v-model="createForm.email"
+            type="email"
+            placeholder="user@example.com"
+            fluid
+          />
         </div>
         <div>
-          <label for="create-name" class="block mb-1 text-xs font-medium text-muted-color">Full Name</label>
-          <InputText id="create-name" v-model="createForm.full_name" placeholder="Jane Doe" fluid />
+          <label
+            for="create-name"
+            class="block mb-1 text-xs font-medium text-muted-color"
+          >Full Name</label>
+          <InputText
+            id="create-name"
+            v-model="createForm.full_name"
+            placeholder="Jane Doe"
+            fluid
+          />
         </div>
         <div>
-          <label for="create-password" class="block mb-1 text-xs font-medium text-muted-color">Password</label>
-          <Password v-model="createForm.password" inputId="create-password" placeholder="Minimum 8 characters" :feedback="false" fluid toggleMask />
+          <label
+            for="create-password"
+            class="block mb-1 text-xs font-medium text-muted-color"
+          >Password</label>
+          <Password
+            v-model="createForm.password"
+            input-id="create-password"
+            placeholder="Minimum 8 characters"
+            :feedback="false"
+            fluid
+            toggle-mask
+          />
         </div>
         <div>
           <span class="block mb-1 text-xs font-medium text-muted-color">Security Groups</span>
-          <div class="space-y-2 mt-1.5" role="group" aria-label="Security groups">
-            <label v-for="sg in SECURITY_GROUPS" :key="sg.id" class="flex items-center gap-2 cursor-pointer text-surface-700 dark:text-surface-300">
-              <Checkbox v-model="createForm.groups" :value="sg.id" :aria-label="sg.label" />
+          <div
+            class="space-y-2 mt-1.5"
+            role="group"
+            aria-label="Security groups"
+          >
+            <label
+              v-for="sg in SECURITY_GROUPS"
+              :key="sg.id"
+              class="flex items-center gap-2 cursor-pointer text-surface-700 dark:text-surface-300"
+            >
+              <Checkbox
+                v-model="createForm.groups"
+                :value="sg.id"
+                :aria-label="sg.label"
+              />
               <span class="text-sm">{{ sg.label }}</span>
               <span class="text-[11px] text-surface-400 font-mono">{{ sg.id }}</span>
             </label>
@@ -325,35 +455,101 @@ async function confirmDelete(user: User) {
       </form>
       <template #footer>
         <div class="flex justify-end gap-2">
-          <Button label="Cancel" severity="secondary" text @click="showCreate = false" />
-          <Button label="Create" @click="createUser" :disabled="!createForm.email || createMutation.isPending.value" :loading="createMutation.isPending.value" />
+          <Button
+            label="Cancel"
+            severity="secondary"
+            text
+            @click="showCreate = false"
+          />
+          <Button
+            label="Create"
+            :disabled="!createForm.email || createMutation.isPending.value"
+            :loading="createMutation.isPending.value"
+            @click="createUser"
+          />
         </div>
       </template>
     </Dialog>
 
-    <Dialog v-model:visible="showEdit" header="Edit User" :style="{ width: '460px' }" modal>
-      <form @submit.prevent="saveUser" class="space-y-4">
+    <Dialog
+      v-model:visible="showEdit"
+      header="Edit User"
+      :style="{ width: '460px' }"
+      modal
+    >
+      <form
+        class="space-y-4"
+        @submit.prevent="saveUser"
+      >
         <div>
-          <label for="edit-email" class="block mb-1 text-xs font-medium text-muted-color">Email</label>
-          <InputText id="edit-email" v-model="editForm.email" type="email" fluid />
+          <label
+            for="edit-email"
+            class="block mb-1 text-xs font-medium text-muted-color"
+          >Email</label>
+          <InputText
+            id="edit-email"
+            v-model="editForm.email"
+            type="email"
+            fluid
+          />
         </div>
         <div>
-          <label for="edit-name" class="block mb-1 text-xs font-medium text-muted-color">Full Name</label>
-          <InputText id="edit-name" v-model="editForm.full_name" fluid />
+          <label
+            for="edit-name"
+            class="block mb-1 text-xs font-medium text-muted-color"
+          >Full Name</label>
+          <InputText
+            id="edit-name"
+            v-model="editForm.full_name"
+            fluid
+          />
         </div>
         <div>
-          <label for="edit-status" class="block mb-1 text-xs font-medium text-muted-color">Status</label>
-          <Select v-model="editForm.status" inputId="edit-status" :options="STATUS_OPTIONS" optionLabel="label" optionValue="value" fluid aria-label="User status" />
+          <label
+            for="edit-status"
+            class="block mb-1 text-xs font-medium text-muted-color"
+          >Status</label>
+          <Select
+            v-model="editForm.status"
+            input-id="edit-status"
+            :options="STATUS_OPTIONS"
+            option-label="label"
+            option-value="value"
+            fluid
+            aria-label="User status"
+          />
         </div>
         <div>
-          <label for="edit-password" class="block mb-1 text-xs font-medium text-muted-color">New Password</label>
-          <Password v-model="editForm.password" inputId="edit-password" placeholder="Leave empty to keep current" :feedback="false" fluid toggleMask />
+          <label
+            for="edit-password"
+            class="block mb-1 text-xs font-medium text-muted-color"
+          >New Password</label>
+          <Password
+            v-model="editForm.password"
+            input-id="edit-password"
+            placeholder="Leave empty to keep current"
+            :feedback="false"
+            fluid
+            toggle-mask
+          />
         </div>
         <div>
           <span class="block mb-1 text-xs font-medium text-muted-color">Security Groups</span>
-          <div class="space-y-2 mt-1.5" role="group" aria-label="Security groups">
-            <label v-for="sg in SECURITY_GROUPS" :key="sg.id" class="flex items-center gap-2 cursor-pointer text-surface-700 dark:text-surface-300">
-              <Checkbox v-model="editForm.groups" :value="sg.id" :aria-label="sg.label" />
+          <div
+            class="space-y-2 mt-1.5"
+            role="group"
+            aria-label="Security groups"
+          >
+            <label
+              v-for="sg in SECURITY_GROUPS"
+              :key="sg.id"
+              class="flex items-center gap-2 cursor-pointer text-surface-700 dark:text-surface-300"
+            >
+              <Checkbox
+                v-model="editForm.groups"
+                :value="sg.id"
+                :aria-label="sg.label"
+              />
               <span class="text-sm">{{ sg.label }}</span>
               <span class="text-[11px] text-surface-400 font-mono">{{ sg.id }}</span>
             </label>
@@ -362,11 +558,20 @@ async function confirmDelete(user: User) {
       </form>
       <template #footer>
         <div class="flex justify-end gap-2">
-          <Button label="Cancel" severity="secondary" text @click="showEdit = false" />
-          <Button label="Save" @click="saveUser" :disabled="saveMutation.isPending.value" :loading="saveMutation.isPending.value" />
+          <Button
+            label="Cancel"
+            severity="secondary"
+            text
+            @click="showEdit = false"
+          />
+          <Button
+            label="Save"
+            :disabled="saveMutation.isPending.value"
+            :loading="saveMutation.isPending.value"
+            @click="saveUser"
+          />
         </div>
       </template>
     </Dialog>
-
   </div>
 </template>
