@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
+import Card from 'primevue/card'
 
 const logoUrl = '/app/wippy-logo.svg'
 </script>
@@ -19,36 +20,44 @@ const logoUrl = '/app/wippy-logo.svg'
         Manage your users and interact with the Wippy AI assistant from the sidebar.
       </p>
       <div class="flex flex-col gap-3 text-left text-sm text-surface-600 dark:text-surface-400">
-        <div class="flex items-start gap-3 p-3 rounded-lg bg-surface-50 dark:bg-surface-800">
-          <Icon
-            icon="tabler:users"
-            class="w-5 h-5 text-primary shrink-0 mt-0.5"
-            aria-hidden="true"
-          />
-          <div>
-            <div class="font-medium text-surface-900 dark:text-surface-0">
-              Users
+        <Card>
+          <template #content>
+            <div class="flex items-start gap-3">
+              <Icon
+                icon="tabler:users"
+                class="w-5 h-5 text-primary shrink-0 mt-0.5"
+                aria-hidden="true"
+              />
+              <div>
+                <div class="font-medium text-surface-900 dark:text-surface-0">
+                  Users
+                </div>
+                <div class="text-xs text-surface-400">
+                  Create, edit, and manage user accounts and security groups.
+                </div>
+              </div>
             </div>
-            <div class="text-xs text-surface-400">
-              Create, edit, and manage user accounts and security groups.
+          </template>
+        </Card>
+        <Card>
+          <template #content>
+            <div class="flex items-start gap-3">
+              <Icon
+                icon="tabler:message-circle"
+                class="w-5 h-5 text-primary shrink-0 mt-0.5"
+                aria-hidden="true"
+              />
+              <div>
+                <div class="font-medium text-surface-900 dark:text-surface-0">
+                  Ask Wippy
+                </div>
+                <div class="text-xs text-surface-400">
+                  Chat with the AI assistant for help navigating the application.
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-        <div class="flex items-start gap-3 p-3 rounded-lg bg-surface-50 dark:bg-surface-800">
-          <Icon
-            icon="tabler:message-circle"
-            class="w-5 h-5 text-primary shrink-0 mt-0.5"
-            aria-hidden="true"
-          />
-          <div>
-            <div class="font-medium text-surface-900 dark:text-surface-0">
-              Ask Wippy
-            </div>
-            <div class="text-xs text-surface-400">
-              Chat with the AI assistant for help navigating the application.
-            </div>
-          </div>
-        </div>
+          </template>
+        </Card>
       </div>
     </div>
   </div>

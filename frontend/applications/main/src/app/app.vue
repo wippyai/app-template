@@ -92,7 +92,7 @@ onMounted(() => {
   <div class="h-full flex">
     <aside
       aria-label="App sidebar"
-      :class="[collapsed ? 'w-14' : 'w-56', 'shrink-0 h-full border-r border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800 flex flex-col transition-all duration-200']"
+      :class="[collapsed ? 'w-14' : 'w-56', 'shrink-0 h-full border-r border-surface-200 dark:border-surface-700 bg-surface-100 dark:bg-surface-800 flex flex-col transition-all duration-200']"
     >
       <div
         class="py-4 flex items-center"
@@ -216,7 +216,7 @@ onMounted(() => {
       </div>
     </aside>
 
-    <main class="flex-1 h-full overflow-y-auto">
+    <main class="flex-1 h-full overflow-y-auto bg-surface-50 dark:bg-surface-850">
       <router-view />
     </main>
   </div>
