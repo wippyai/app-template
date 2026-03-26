@@ -10,7 +10,7 @@ To integrate with Wippy, use the `getWippyApi()` promise or the `$W` global vari
 
 ```typescript
 // Using getWippyApi()
-const { config, host, api, on, state } = await getWippyApi()
+const { config, host, api, on, state, ws } = await getWippyApi()
 
 // Or use the $W global for individual access
 const config = await $W.config()
@@ -18,6 +18,7 @@ const host = await $W.host()
 const api = await $W.api()
 const on = await $W.on()
 const state = await $W.state()
+const ws = await $W.ws()
 const instance = await $W.instance() // Full ProxyApiInstance
 ```
 
@@ -29,6 +30,7 @@ The initialization returns the following components:
 4. `on` - Subscription to real-time events from WebSocket layer
 5. `loadWebComponent` - Function to dynamically load other web components
 6. `state` - Host-mediated state persistence (survives iframe destruction)
+7. `ws` - WebSocket send bridge — send commands through the host's WebSocket connection
 
 ---
 
@@ -255,6 +257,84 @@ const result = await api.post('/api/users', {
 })
 ```
 
+### File Upload
+
+Upload files using `FormData`. The default JSON content type is automatically replaced when sending `FormData`:
+
+```typescript
+const api = useApi()
+
+const file: File = /* from <input type="file"> or drag-and-drop */
+const formData = new FormData()
+formData.append('file', file)
+
+const abort = new AbortController()
+
+const response = await api.post('/api/v1/uploads', formData, {
+  signal: abort.signal,
+  headers: { 'Content-Type': 'multipart/form-data' },
+  onUploadProgress: (progressEvent) => {
+    if (!progressEvent.total) return
+    const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+    console.log(`Upload progress: ${percent}%`)
+  },
+})
+
+// Response: { success: boolean, uuid: string }
+const uploadedUuid = response.data.uuid
+```
+
+To cancel an upload, call `abort.abort()`.
+
+Track processing status via WebSocket events:
+
+```typescript
+const { on } = useWippy()
+
+on(`upload:${uploadedUuid}`, (msg) => {
+  // msg.data.status: 'uploaded' | 'completed' | 'error' | 'processing'
+  console.log('Upload status:', msg.data.status)
+})
+```
+
+### File Download
+
+Download binary files by setting `responseType: 'blob'`:
+
+```typescript
+const api = useApi()
+
+const response = await api.get(`/api/v1/uploads/${uuid}/download`, {
+  responseType: 'blob',
+})
+
+// Create a download link
+const url = URL.createObjectURL(response.data)
+const a = document.createElement('a')
+a.href = url
+a.download = 'filename.pdf'
+a.click()
+URL.revokeObjectURL(url)
+```
+
+### Retrieve Upload Info
+
+```typescript
+const api = useApi()
+
+// List uploads with pagination
+const list = await api.get('/api/v1/uploads/list', {
+  params: { limit: 10, offset: 0 },
+})
+// list.data.uploads: Array<{ uuid, mime_type, size, status, meta: { filename } }>
+
+// Get a specific upload
+const upload = await api.get(`/api/v1/uploads/${uuid}`)
+// upload.data: { uuid, mime_type, size, status, meta: { filename, content_sample? } }
+```
+
+> **Note:** Maximum file size is 100 MB.
+
 ---
 
 ## on() Events
@@ -408,6 +488,71 @@ if (cached) {
 on('@visibility', (visible) => {
   if (!visible) state.set('users', users.value)
 })
+```
+
+---
+
+## ws Object
+
+The `ws` object lets child apps send commands through the host's WebSocket connection.
+
+### send
+
+```typescript
+ws.send(command: WsCommand): void
+```
+
+Send a raw WebSocket command. Fire-and-forget — responses arrive via `on()` event subscriptions.
+
+```typescript
+const { ws, on } = await getWippyApi()
+
+// Listen for responses
+on('session:my-session:message:*', (msg) => {
+  console.log('Response:', msg.data)
+})
+
+// Send a message
+ws.send({
+  type: 'session_message',
+  session_id: 'my-session',
+  message_id: crypto.randomUUID(),
+  data: { text: 'Hello from child app' },
+})
+```
+
+### sendWithResponse
+
+```typescript
+ws.sendWithResponse(command: WsCommand): Promise<WsMessage>
+```
+
+Send a command and wait for the server's response. Times out after 30 seconds.
+
+```typescript
+const { ws } = await getWippyApi()
+
+const response = await ws.sendWithResponse({
+  type: 'session_open',
+  start_token: 'my-token',
+})
+console.log('Session opened:', response.data)
+```
+
+### sendCommand
+
+```typescript
+ws.sendCommand(sessionId: string, data: { command: string, [key: string]: unknown }): void
+```
+
+Convenience method for session commands (stop, model, agent).
+
+```typescript
+const { ws } = await getWippyApi()
+
+ws.sendCommand('session-uuid', { command: 'stop' })
+ws.sendCommand('session-uuid', { command: 'model', name: 'gpt-4' })
+ws.sendCommand('session-uuid', { command: 'agent', name: 'my-agent' })
 ```
 
 ---

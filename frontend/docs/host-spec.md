@@ -165,7 +165,52 @@ For pages to appear in the application navigation menu, include these fields in 
 - **`wippy.events`** - JSON Schema describing custom events the component can emit - **Recommended for ESM module**
 - **`wippy.path`** - HTML entry point - **Required for Web App only**
 - **`wippy.proxy`** - Proxy configuration - **Required for Web App only**
+- **`wippy.configOverrides`** - Per-page AppConfig overrides (customization, feature flags) - **Optional for Web App**
 - **`wippy.cache`** - List of files/folder that build server can cache between builds, `["node_modules"]` by default
+
+### wippy.configOverrides (Per-Page Overrides)
+
+Pages can override the host's AppConfig to customize their own appearance or behavior. Overrides are merged into the config before CSS variables are applied, so each page can have its own theme.
+
+```json
+{
+  "wippy": {
+    "path": "dist/index.html",
+    "proxy": { "enabled": true, "injections": { "css": { "customCss": true, "customVariables": true } } },
+    "configOverrides": {
+      "customization": {
+        "cssVariables": {
+          "p-primary-500": "#ff6b00",
+          "@dark": { "p-primary-500": "#ff8c3a" }
+        },
+        "customCSS": ".dashboard-header { border-radius: 12px; }"
+      }
+    }
+  }
+}
+```
+
+**Merge rules:**
+- `cssVariables`: **replaces** the host's CSS variables (page provides its own complete theme)
+- `customCSS`: **replaces** the host's custom CSS
+- `icons`: **merges** additively (page adds icons on top of host's)
+- `feature` flags: **deep merges** (e.g., override `routePrefix` or `apiRoutes`)
+
+**How it works at runtime:**
+1. Host reads `wippy.configOverrides` from the package.json
+2. Injects `window.__WIPPY_CONFIG_OVERRIDES__` into the iframe's srcdoc before proxy.js loads
+3. proxy.js merges overrides into the resolved config before applying CSS variables
+4. Nested `<w-artifact>` iframes inherit the merged config automatically
+
+For testing in standalone mode (dev-proxy), set the global manually:
+```html
+<script>
+  window.__WIPPY_CONFIG_OVERRIDES__ = {
+    customization: { cssVariables: { "p-primary-500": "#ff6b00" } }
+  }
+</script>
+<script src="http://localhost:5173/dev-proxy.js"></script>
+```
 
 ## Wippy Configuration
 

@@ -15,6 +15,14 @@ entries:
       url: /app
       base_path: app/main
       entry_point: app.html
+      # config_overrides: Per-page AppConfig overrides. Injected into child iframe
+      # as window.__WIPPY_CONFIG_OVERRIDES__ before proxy.js loads.
+      # cssVariables/customCSS replace (not merge), iconSets merge additively.
+      # Example: override primary color to red for this page only:
+      # config_overrides:
+      #   customization:
+      #     cssVariables:
+      #       "--p-primary": "#ef4444"
     proxy:
       enabled: true
       css:
