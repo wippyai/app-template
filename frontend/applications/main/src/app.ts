@@ -18,8 +18,10 @@ export async function createMainApp() {
   const axios = await window.$W.api()
   const instance = await window.$W.instance()
 
-  const initialPath = config.path
-    ? (config.path.startsWith('/') ? config.path : '/' + config.path)
+  // config.path is deprecated (v1 AppConfig only). Host v18+ uses config.context.route.
+  const routePath = config.context?.route || config.path
+  const initialPath = routePath
+    ? (routePath.startsWith('/') ? routePath : '/' + routePath)
     : '/'
 
   if (config.customization?.icons) {

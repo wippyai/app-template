@@ -10,13 +10,14 @@ To integrate with Wippy, use the `getWippyApi()` promise or the `$W` global vari
 
 ```typescript
 // Using getWippyApi()
-const { config, host, api, on, state, ws } = await getWippyApi()
+const { config, host, api, on, logger, state, ws } = await getWippyApi()
 
 // Or use the $W global for individual access
 const config = await $W.config()
 const host = await $W.host()
 const api = await $W.api()
 const on = await $W.on()
+const logger = await $W.logger()
 const state = await $W.state()
 const ws = await $W.ws()
 const instance = await $W.instance() // Full ProxyApiInstance
@@ -28,9 +29,10 @@ The initialization returns the following components:
 2. `host` - Host application communication methods
 3. `api` - Authenticated axios instance with automatic auth token injection
 4. `on` - Subscription to real-time events from WebSocket layer
-5. `loadWebComponent` - Function to dynamically load other web components
-6. `state` - Host-mediated state persistence (survives iframe destruction)
-7. `ws` - WebSocket send bridge — send commands through the host's WebSocket connection
+5. `logger` - Structured logging — logs traverse child → host → parent for centralized collection. Use instead of `console.log/error` for production logging.
+6. `loadWebComponent` - Function to dynamically load other web components
+7. `state` - Host-mediated state persistence (survives iframe destruction)
+8. `ws` - WebSocket send bridge — send commands through the host's WebSocket connection
 
 ---
 
