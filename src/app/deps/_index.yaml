@@ -145,7 +145,7 @@ entries:
   - name: facade
     kind: ns.dependency
     component: wippy/facade
-    version: '>=v0.5.16'
+    version: '>=v0.5.37'
     parameters:
       - name: server
         value: app:gateway
