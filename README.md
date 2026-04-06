@@ -37,12 +37,13 @@ wippy run -c
 
 ### Wippy Web Host
 
-The **Web Host** is a set of JS/CSS/HTML modules served from a CDN (e.g., `https://web-host.wippy.ai/webcomponents-1.0.18/`). It provides:
+The **Web Host** is a set of JS/CSS/HTML modules served from a CDN (e.g., `https://web-host.wippy.ai/webcomponents-1.0.20/`). It provides:
 
 - **Chat UI** — conversation interface with AI agents
 - **Navigation** — left sidebar with page links, user menu
 - **Page rendering** — loads `view.page` entries as sandboxed iframes
 - **Theme injection** — injects CSS (fonts, theme variables, PrimeVue styles) into child iframes
+- **Loading/error screens** — `<wippy-loading>` and `<wippy-error>` web components auto-injected into all child iframes via `loading.js`
 - **WebSocket relay** — real-time event distribution to child content
 
 The Web Host is the "shell" that wraps your application's frontend pages.
@@ -107,7 +108,8 @@ Web Host (CDN)
 ▼
 Child Iframe (view.page)
 │  Host re-injects the same CSS into each iframe (controlled by proxy config):
-│  - theme-config.css, PrimeVue CSS, iframe.css, fonts, custom_css, css_variables
+│  - loading.js (registers <wippy-loading> and <wippy-error>)
+│  - proxy.js, theme-config.css, PrimeVue CSS, iframe.css, fonts, custom_css, css_variables
 │
 ✗ Non-host pages (login.html, etc.)
    NOT reached by this flow — must be themed manually
@@ -231,6 +233,7 @@ Components can read content from child `<template data-type="...">` elements. En
 - **PrimeVue via `@wippy-fe/theme`.** Import `PrimeVuePlugin` from `@wippy-fe/theme/primevue-plugin` — it installs PrimeVue in unstyled mode (`{ theme: 'none' }`). The `tailwindcss-primeui` Tailwind plugin (included in the theme preset) generates component styles. For web components, add `PrimeVuePlugin` to `vueConfig.plugins` and request `primeVueCssUrl` in `hostCssKeys` for host-provided styles.
 - **Theme-aware colors.** Use semantic CSS variables (`--p-content-background`, `--p-text-color`, `--p-content-border-color`, `--p-text-muted-color`) for colors. Never use numbered surface variables (`--p-surface-0`, `--p-surface-100`) for theme-dependent colors — they are a fixed light-to-dark scale that does not flip with dark mode. For derived shades, use `color-mix()`: `color-mix(in srgb, var(--p-content-background) 85%, var(--p-text-color) 15%)`.
 - **Vite externals.** Always externalize: `vue`, `pinia`, `@iconify/vue`, `@wippy-fe/proxy` (provided by host import maps). Bundle everything else (chart.js, primevue, markdown-it, etc.).
+- **Loading & error screens.** For fullscreen loading states, use `<wippy-loading title="Loading...">`. For fullscreen errors, use `<wippy-error title="Failed" message="Details here" icon="circle" severity="danger">`. Both are auto-registered via `loading.js` (injected by the host) — no imports needed. Use `no-bg` attribute on `<wippy-loading>` for overlay contexts with transparent background.
 - **ESLint.** Each package has its own `.eslintrc.cjs` with `vue-eslint-parser`, `@typescript-eslint/strict`, and `plugin:vue/vue3-recommended`. Run `npm run lint` per package.
 
 ### Building
@@ -280,10 +283,10 @@ Pages like `static/login.html` are outside the Web Host. Two approaches:
 
 **Simple pages: CDN imports.** For trivial static pages (like a basic login form), import theme CSS directly:
 1. Import CSS via CDN URLs:
-   - `https://web-host.wippy.ai/webcomponents-1.0.18/@wippy-fe/assets/theme-config.css` — theme variables
-   - `https://web-host.wippy.ai/webcomponents-1.0.18/@wippy-fe/assets/preflight.css` — Tailwind reset (normalizes form elements)
-   - `https://web-host.wippy.ai/webcomponents-1.0.18/@wippy-fe/assets/tailwind.css` — PrimeVue component styles
-   - `https://web-host.wippy.ai/webcomponents-1.0.18/@wippy-fe/assets/iframe.css` — scrollbar styling
+   - `https://web-host.wippy.ai/webcomponents-1.0.20/@wippy-fe/assets/theme-config.css` — theme variables
+   - `https://web-host.wippy.ai/webcomponents-1.0.20/@wippy-fe/assets/preflight.css` — Tailwind reset (normalizes form elements)
+   - `https://web-host.wippy.ai/webcomponents-1.0.20/@wippy-fe/assets/tailwind.css` — PrimeVue component styles
+   - `https://web-host.wippy.ai/webcomponents-1.0.20/@wippy-fe/assets/iframe.css` — scrollbar styling
 2. Use PrimeVue CSS classes on raw HTML elements (`p-inputtext`, `p-button`, `p-card`, etc.)
 3. Add the same CSS variable overrides as a `<style>` block after the imports.
 

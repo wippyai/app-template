@@ -325,11 +325,13 @@ export const webComponent: () => Promise<typeof HTMLElement>
 
 The page is defined by the `wippy.path` field in package.json.
 
-The HTML file specified in `wippy.path` **MUST** include a `<script type="text/javascript" data-role="@wippy/scripts">` element where additional scripts will be automatically injected.
+The HTML file specified in `wippy.path` **MUST** include a `<script type="text/javascript" data-role="@wippy/scripts">` element where additional scripts will be automatically injected. The host injects `loading.js` (registers `<wippy-loading>` and `<wippy-error>`) and `proxy.js` before this marker.
 
 The page **SHOULD** include an `<script type="importmap">` element with the merged import-map so that ES-Modules work without bundling.
 
 Inside the page you **MUST** use the [Proxy API](./proxy-api.md) API to talk to the host unless you explicitly disabled it. Note you wont have access to host config, including auth token, like this.
+
+For fullscreen loading and error states, use `<wippy-loading>` and `<wippy-error>` — they are auto-registered and theme-aware. See the [Loading & Error Components](./proxy-api.md#loading--error-components) section in proxy-api.md for the full attribute reference.
 
 ## External Dependencies
 

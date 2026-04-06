@@ -772,3 +772,96 @@ w-artifact::part(frame)  { border: 0; }
 4. All iframe → host commands are bridged automatically
 5. If `sub-path` is supplied, its value is forwarded to the inner iframe as `config.path`
 6. Markdown and inline-interactive artifacts are **not** supported - only plain iframe renders
+
+---
+
+## Loading & Error Components
+
+Two zero-dependency web components are auto-registered via `loading.js` (injected before `proxy.js`). No imports or manual registration needed — just use the HTML tags.
+
+### `<wippy-loading>`
+
+Fullscreen loading spinner with theme-aware colors. The animation is time-synced to the system clock, so mount/remount preserves the spinner phase (no visual jump).
+
+| Attribute | Description |
+|-----------|-------------|
+| `title` | Main text (e.g. "Loading...") |
+| `subtitle` | Secondary text |
+| `no-bg` | Boolean — transparent background for overlay use |
+
+```html
+<!-- Fullscreen (standalone use in app.html or page body) -->
+<wippy-loading title="Loading..." subtitle="Please wait"></wippy-loading>
+
+<!-- Overlay mode (transparent bg, parent controls backdrop) -->
+<wippy-loading no-bg title="Loading page content..."></wippy-loading>
+```
+
+### `<wippy-error>`
+
+Fullscreen error/warning display with icon and severity-based coloring.
+
+| Attribute | Values | Default |
+|-----------|--------|---------|
+| `title` | Any string | "Something went wrong" |
+| `message` | Any string | (empty) |
+| `icon` | `circle`, `triangle`, `sad` | `circle` |
+| `severity` | `danger`, `warning` | `danger` |
+| `no-bg` | Boolean — transparent background | (absent) |
+
+```html
+<wippy-error title="Failed to load" message="Server returned 500" icon="circle" severity="danger"></wippy-error>
+<wippy-error title="Connection Lost" message="Retrying..." icon="triangle" severity="warning"></wippy-error>
+```
+
+### Recommended Pattern
+
+Do NOT build custom loading divs or CSS spinners — use `<wippy-loading>` and `<wippy-error>` for all fullscreen states. They follow the platform theme automatically (colors, dark mode) and provide a consistent experience across all pages.
+
+**Vanilla HTML page:**
+```html
+<body>
+  <wippy-loading id="loader" title="Loading..."></wippy-loading>
+  <div id="content" style="display:none">
+    <!-- your content -->
+  </div>
+  <script>
+    async function init() {
+      try {
+        const { api, host } = await getWippyApi()
+        // ... fetch data, set up page ...
+        document.getElementById('loader').remove()
+        document.getElementById('content').style.display = 'block'
+      } catch (error) {
+        var errorEl = document.createElement('wippy-error')
+        errorEl.setAttribute('title', 'Initialization failed')
+        errorEl.setAttribute('message', error.message)
+        document.getElementById('loader').replaceWith(errorEl)
+      }
+    }
+    init()
+  </script>
+</body>
+```
+
+**Vue 3 app (app.html entry point):**
+```html
+<body>
+  <div id="app">
+    <wippy-loading title="Loading..."></wippy-loading>
+  </div>
+  <script type="module" src="./src/app.ts"></script>
+</body>
+```
+When Vue mounts into `#app`, it replaces the `<wippy-loading>` element automatically — no manual cleanup needed.
+
+### CSS Custom Properties
+
+Both components use Shadow DOM and inherit CSS variables from `@wippy-fe/theme`:
+- `--p-primary` — spinner accent color
+- `--p-surface-0` / `--p-surface-900` — background (light/dark)
+- `--p-text-color` — title text
+- `--p-text-muted-color` — subtitle/message text
+- `--p-danger-*` / `--p-warn-*` — error/warning severity colors
+
+If the theme CSS is not loaded (e.g., facade before config fetch), hardcoded fallbacks are used.
