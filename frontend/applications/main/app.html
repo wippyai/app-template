@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wippy App</title>
+    <title>Wippy</title>
     <script
             src="http://localhost:5173/dev-proxy.js"
             data-role="@wippy/scripts"
@@ -16,22 +16,6 @@
             "vue-router": "https://esm.sh/vue-router@4",
             "luxon": "https://esm.sh/luxon",
             "@iconify/vue": "https://esm.sh/@iconify/vue",
-            "primevue/config": "https://esm.sh/primevue@4/config?external=vue",
-            "primevue/button": "https://esm.sh/primevue@4/button?external=vue",
-            "primevue/tag": "https://esm.sh/primevue@4/tag?external=vue",
-            "primevue/dialog": "https://esm.sh/primevue@4/dialog?external=vue",
-            "primevue/checkbox": "https://esm.sh/primevue@4/checkbox?external=vue",
-            "primevue/inputtext": "https://esm.sh/primevue@4/inputtext?external=vue",
-            "primevue/password": "https://esm.sh/primevue@4/password?external=vue",
-            "primevue/select": "https://esm.sh/primevue@4/select?external=vue",
-            "primevue/datatable": "https://esm.sh/primevue@4/datatable?external=vue",
-            "primevue/column": "https://esm.sh/primevue@4/column?external=vue",
-            "primevue/avatar": "https://esm.sh/primevue@4/avatar?external=vue",
-            "primevue/accordion": "https://esm.sh/primevue@4/accordion?external=vue",
-            "primevue/accordionpanel": "https://esm.sh/primevue@4/accordionpanel?external=vue",
-            "primevue/accordionheader": "https://esm.sh/primevue@4/accordionheader?external=vue",
-            "primevue/accordioncontent": "https://esm.sh/primevue@4/accordioncontent?external=vue",
-            "primevue/chip": "https://esm.sh/primevue@4/chip?external=vue",
             "axios": "https://esm.sh/axios"
         }
     }
@@ -39,11 +23,7 @@
 </head>
 <body>
     <div id="app">
-        <div style="display:flex;align-items:center;justify-content:center;height:100vh;gap:12px;font-family:system-ui,-apple-system,sans-serif;color:rgba(128,128,128,0.6)">
-            <svg width="20" height="20" viewBox="0 0 20 20" style="animation:app-spin .7s linear infinite"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.5" opacity=".2"/><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="36 14" stroke-linecap="round"/></svg>
-            <span style="font-size:13px">Loading...</span>
-            <style>@keyframes app-spin{to{transform:rotate(360deg)}}</style>
-        </div>
+        <wippy-loading title="Loading..."></wippy-loading>
     </div>
     <script type="module" src="./src/app.ts"></script>
 </body>

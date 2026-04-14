@@ -736,6 +736,115 @@ Key rules:
 
 ---
 
+## State Persistence with Pinia
+
+Components that need state to survive navigation (iframe destruction and recreation) can use `@wippy-fe/pinia-persist`. This Pinia plugin automatically saves and restores store state via the host-mediated state API.
+
+### Setup
+
+Add `@wippy-fe/pinia-persist` to dependencies and register it as a Pinia plugin:
+
+```typescript
+// src/index.ts
+import { createWippyPersist } from '@wippy-fe/pinia-persist'
+
+class MyWidgetElement extends WippyVueElement<ComponentProps, Events> {
+  static get vueConfig() {
+    return {
+      rootComponent: App,
+      plugins: [PrimeVuePlugin],
+      piniaPlugins: [createWippyPersist()],
+    }
+  }
+}
+```
+
+### Basic Store
+
+```typescript
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
+
+export const useMyStore = defineStore('my-store', () => {
+  const data = ref<string[]>([])
+  return { data }
+}, {
+  wippyPersist: true,  // Persist all state with defaults
+})
+```
+
+### Per-Instance State with persist-key
+
+When multiple instances of a component appear on the same page, use a `persist-key` prop to give each instance its own state scope. Without this, all instances share the same persisted state.
+
+> **CRITICAL:** `persist-key` values MUST be globally unique across your entire application. If two unrelated component instances use the same key, their state **will collide and overwrite each other**. Use descriptive, namespaced keys (e.g., `dashboard-sidebar`, `user-prefs-panel`).
+
+```typescript
+// src/stores/counter.ts
+export function useCounterStore(persistKey?: string) {
+  const storeId = persistKey ? `counter:${persistKey}` : 'counter'
+
+  return defineStore(storeId, () => {
+    const count = ref(0)
+    return { count }
+  }, {
+    wippyPersist: persistKey ? { scope: persistKey } : true,
+  })()
+}
+```
+
+```vue
+<!-- src/app/my-widget.vue -->
+<script setup lang="ts">
+const props = useComponentProps()
+const store = useCounterStore(props.value.persistKey)
+</script>
+```
+
+```html
+<!-- Usage: two instances with separate state -->
+<example-counter-persist persist-key="sidebar-a"></example-counter-persist>
+<example-counter-persist persist-key="sidebar-b"></example-counter-persist>
+```
+
+### How It Works
+
+- `wippyPersist: true` — persists all state keys, scoped to the page UUID
+- `wippyPersist: { scope: 'my-key' }` — overrides the default page scope with a custom scope (auto-prefixed with `@custom:` to prevent collisions with system scopes)
+- `wippyPersist: { pick: ['count'], debounce: 500 }` — only persist `count`, debounce saves by 500ms
+- State is saved on `$subscribe` (debounced), on `@visibility:false`, and on `window.unload`
+- State is hydrated asynchronously when the store is created
+
+### Prop Name Convention
+
+HTML attributes use kebab-case (`persist-key`), but the prop parser converts them to camelCase (`persistKey`). Always access props using camelCase in your Vue component:
+
+```typescript
+// Correct
+const store = useMyStore(props.value.persistKey)
+
+// Wrong — will be undefined
+const store = useMyStore(props.value['persist-key'])
+```
+
+### vite.config.ts
+
+`@wippy-fe/pinia-persist` is **not** available on the CDN import map. It must be bundled into your component (do NOT add it to `rollupOptions.external`):
+
+```typescript
+rollupOptions: {
+  external: [
+    'vue',
+    'pinia',
+    '@iconify/vue',
+    '@wippy-fe/proxy',
+    // Do NOT add '@wippy-fe/pinia-persist' here
+  ],
+}
+```
+
+---
+
 ## Build
 
 Build a component with the `--outDir` flag to place output in the static directory:

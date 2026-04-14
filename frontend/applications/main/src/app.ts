@@ -1,4 +1,6 @@
 import { addCollection } from '@iconify/vue'
+import { VueQueryPlugin } from '@tanstack/vue-query'
+import { createWippyPersist, preloadWippyState } from '@wippy-fe/pinia-persist'
 import { createPinia } from 'pinia'
 import { createApp } from 'vue'
 import { PrimeVuePlugin } from '@wippy-fe/theme/primevue-plugin'
@@ -16,8 +18,10 @@ export async function createMainApp() {
   const axios = await window.$W.api()
   const instance = await window.$W.instance()
 
-  const initialPath = config.path
-    ? (config.path.startsWith('/') ? config.path : '/' + config.path)
+  // config.path is deprecated (v1 AppConfig only). Host v18+ uses config.context.route.
+  const routePath = config.context?.route || config.path
+  const initialPath = routePath
+    ? (routePath.startsWith('/') ? routePath : '/' + routePath)
     : '/'
 
   if (config.customization?.icons) {
@@ -29,7 +33,11 @@ export async function createMainApp() {
 
   const app = createApp(App)
 
-  app.use(createPinia())
+  const preloaded = await preloadWippyState()
+  const pinia = createPinia()
+  pinia.use(createWippyPersist(preloaded))
+  app.use(pinia)
+  app.use(VueQueryPlugin)
   app.use(PrimeVuePlugin)
 
   app.provide(HOST_API, hostApi)

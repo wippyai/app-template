@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
+import { useQuery, useQueryClient, useMutation } from '@tanstack/vue-query'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import Dialog from 'primevue/dialog'
@@ -12,9 +13,32 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Avatar from 'primevue/avatar'
 import { useApi, useHost } from '../composables/useWippy'
+import { useUsersStore } from '../stores/users'
+import type { User } from '../stores/users'
 
 const api = useApi()
 const host = useHost()
+const queryClient = useQueryClient()
+const usersStore = useUsersStore()
+
+const USERS_KEY = ['users'] as const
+
+const { data: users, isPending, isError } = useQuery({
+  queryKey: USERS_KEY,
+  queryFn: async () => {
+    const { data } = await api.get('/api/v1/users')
+    if (data.success)
+      return (data.users || []) as User[]
+    return [] as User[]
+  },
+  placeholderData: () => usersStore.list.length > 0 ? usersStore.list : undefined,
+})
+
+// Sync query results back to Pinia for persistence
+watch(users, (val) => {
+  if (val)
+    usersStore.list = val
+})
 
 const STATUS_OPTIONS = [
   { label: 'Active', value: 'active' },
@@ -23,22 +47,10 @@ const STATUS_OPTIONS = [
   { label: 'Pending', value: 'pending' },
 ]
 
-interface User {
-  user_id: string
-  email: string
-  full_name: string
-  status: string
-  security_groups: string[]
-  created_at: number
-}
-
 const SECURITY_GROUPS = [
   { id: 'app.security:admin', label: 'Admin' },
   { id: 'app.security:user', label: 'User' },
 ]
-
-const users = ref<User[]>([])
-const loading = ref(false)
 
 const showCreate = ref(false)
 const createForm = ref({ email: '', full_name: '', password: '', groups: ['app.security:user'] as string[] })
@@ -74,42 +86,36 @@ function userInitial(user: User): string {
   return (user.full_name || user.email).charAt(0).toUpperCase()
 }
 
-async function fetchUsers() {
-  loading.value = true
-  try {
-    const { data } = await api.get('/api/v1/users')
-    if (data.success) {
-      users.value = data.users || []
-    }
-  } catch {
-    users.value = []
-  } finally {
-    loading.value = false
-  }
-}
-
-async function createUser() {
-  if (!createForm.value.email || !createForm.value.password) return
-  try {
+const createMutation = useMutation({
+  mutationFn: async (form: typeof createForm.value) => {
     const { data } = await api.post('/api/v1/users', {
-      email: createForm.value.email,
-      full_name: createForm.value.full_name,
-      password: createForm.value.password,
+      email: form.email,
+      full_name: form.full_name,
+      password: form.password,
     })
     if (data.success && data.user) {
-      if (createForm.value.groups.length > 0) {
+      if (form.groups.length > 0) {
         await api.put(`/api/v1/users/${data.user.user_id}/groups`, {
-          groups: createForm.value.groups,
+          groups: form.groups,
         })
       }
-      createForm.value = { email: '', full_name: '', password: '', groups: ['app.security:user'] }
-      showCreate.value = false
-      host.toast({ severity: 'success', summary: 'User created' })
-      await fetchUsers()
     }
-  } catch {
+    return data
+  },
+  onSuccess: () => {
+    createForm.value = { email: '', full_name: '', password: '', groups: ['app.security:user'] }
+    showCreate.value = false
+    host.toast({ severity: 'success', summary: 'User created' })
+    queryClient.invalidateQueries({ queryKey: USERS_KEY })
+  },
+  onError: () => {
     host.toast({ severity: 'error', summary: 'Failed to create user' })
-  }
+  },
+})
+
+function createUser() {
+  if (!createForm.value.email || !createForm.value.password) return
+  createMutation.mutate(createForm.value)
 }
 
 function openEdit(user: User) {
@@ -124,26 +130,45 @@ function openEdit(user: User) {
   showEdit.value = true
 }
 
-async function saveUser() {
-  const userId = editForm.value.user_id
-  if (!userId) return
-  try {
+const saveMutation = useMutation({
+  mutationFn: async (form: typeof editForm.value) => {
     const updateData: Record<string, string> = {}
-    if (editForm.value.email) updateData.email = editForm.value.email
-    if (editForm.value.full_name) updateData.full_name = editForm.value.full_name
-    if (editForm.value.status) updateData.status = editForm.value.status
-    if (editForm.value.password) updateData.password = editForm.value.password
+    if (form.email) updateData.email = form.email
+    if (form.full_name) updateData.full_name = form.full_name
+    if (form.status) updateData.status = form.status
+    if (form.password) updateData.password = form.password
 
-    await api.put(`/api/v1/users/${userId}`, updateData)
-    await api.put(`/api/v1/users/${userId}/groups`, { groups: editForm.value.groups })
-
+    await api.put(`/api/v1/users/${form.user_id}`, updateData)
+    await api.put(`/api/v1/users/${form.user_id}/groups`, { groups: form.groups })
+  },
+  onSuccess: () => {
     showEdit.value = false
     host.toast({ severity: 'success', summary: 'User updated' })
-    await fetchUsers()
-  } catch {
+    queryClient.invalidateQueries({ queryKey: USERS_KEY })
+  },
+  onError: () => {
     host.toast({ severity: 'error', summary: 'Failed to update user' })
-  }
+  },
+})
+
+function saveUser() {
+  if (!editForm.value.user_id) return
+  saveMutation.mutate(editForm.value)
 }
+
+const deleteMutation = useMutation({
+  mutationFn: async (user: User) => {
+    const { data } = await api.delete(`/api/v1/users/${user.user_id}`)
+    return data
+  },
+  onSuccess: () => {
+    host.toast({ severity: 'success', summary: 'User deleted' })
+    queryClient.invalidateQueries({ queryKey: USERS_KEY })
+  },
+  onError: () => {
+    host.toast({ severity: 'error', summary: 'Failed to delete user' })
+  },
+})
 
 async function confirmDelete(user: User) {
   const name = user.full_name || user.email
@@ -161,22 +186,9 @@ async function confirmDelete(user: User) {
     acceptProps: { severity: 'danger' },
     rejectProps: { severity: 'secondary', text: true },
   })
-  if (confirmed) await executeDelete(user)
+  if (confirmed)
+    deleteMutation.mutate(user)
 }
-
-async function executeDelete(user: User) {
-  try {
-    const { data } = await api.delete(`/api/v1/users/${user.user_id}`)
-    if (data.success) {
-      host.toast({ severity: 'success', summary: 'User deleted' })
-      await fetchUsers()
-    }
-  } catch {
-    host.toast({ severity: 'error', summary: 'Failed to delete user' })
-  }
-}
-
-onMounted(fetchUsers)
 </script>
 
 <template>
@@ -185,45 +197,105 @@ onMounted(fetchUsers)
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-primary">
-            <Icon icon="tabler:users" class="w-5 h-5 text-primary-contrast" aria-hidden="true" />
+            <Icon
+              icon="tabler:users"
+              class="w-5 h-5 text-primary-contrast"
+              aria-hidden="true"
+            />
           </div>
           <div>
-            <h1 class="text-sm font-semibold text-surface-900 dark:text-surface-0">Users</h1>
-            <p class="text-[11px] text-surface-400">{{ users.length }} user{{ users.length !== 1 ? 's' : '' }}</p>
+            <h1 class="text-sm font-semibold text-surface-900 dark:text-surface-0">
+              Users
+            </h1>
+            <p class="text-[11px] text-surface-400">
+              {{ (users ?? []).length }} user{{ (users ?? []).length !== 1 ? 's' : '' }}
+            </p>
           </div>
         </div>
-        <Button label="Create User" size="small" @click="showCreate = true">
-          <template #icon><Icon icon="tabler:plus" class="w-4 h-4" aria-hidden="true" /></template>
+        <Button
+          label="Create User"
+          size="small"
+          @click="showCreate = true"
+        >
+          <template #icon>
+            <Icon
+              icon="tabler:plus"
+              class="w-4 h-4"
+              aria-hidden="true"
+            />
+          </template>
         </Button>
       </div>
     </div>
 
     <div class="flex-1 overflow-y-auto">
+      <div
+        v-if="isError"
+        class="h-full flex items-center justify-center"
+      >
+        <div class="text-center">
+          <Icon
+            icon="tabler:alert-circle"
+            class="w-10 h-10 text-red-400 mx-auto mb-2"
+            aria-hidden="true"
+          />
+          <p class="text-sm text-surface-400 mb-3">
+            Failed to load users
+          </p>
+          <Button
+            label="Retry"
+            size="small"
+            @click="() => queryClient.invalidateQueries({ queryKey: USERS_KEY })"
+          />
+        </div>
+      </div>
+
       <DataTable
-        v-if="users.length > 0"
-        :value="users"
-        :loading="loading"
-        dataKey="user_id"
+        v-else-if="(users ?? []).length > 0"
+        :value="users ?? []"
+        :loading="isPending"
+        data-key="user_id"
         :pt="{ bodyRow: { class: 'group' } }"
         class="text-sm"
       >
-        <Column header="User" field="full_name">
+        <Column
+          header="User"
+          field="full_name"
+        >
           <template #body="{ data: user }">
             <div class="flex items-center gap-3">
-              <Avatar :label="userInitial(user)" shape="circle" class="bg-primary/10 text-primary text-xs font-semibold" />
+              <Avatar
+                :label="userInitial(user)"
+                shape="circle"
+                class="bg-primary/10 text-primary text-xs font-semibold"
+              />
               <div class="min-w-0">
-                <div class="text-surface-900 dark:text-surface-0 font-medium truncate">{{ user.full_name || '-' }}</div>
-                <div class="text-[11px] text-surface-400 truncate">{{ user.email }}</div>
+                <div class="text-surface-900 dark:text-surface-0 font-medium truncate">
+                  {{ user.full_name || '-' }}
+                </div>
+                <div class="text-[11px] text-surface-400 truncate">
+                  {{ user.email }}
+                </div>
               </div>
             </div>
           </template>
         </Column>
-        <Column header="Status" field="status">
+        <Column
+          header="Status"
+          field="status"
+        >
           <template #body="{ data: user }">
-            <Tag :value="user.status" :severity="statusSeverity(user.status)" class="text-[10px]" />
+            <Tag
+              :value="user.status"
+              :severity="statusSeverity(user.status)"
+              class="text-[10px]"
+            />
           </template>
         </Column>
-        <Column header="Groups" field="security_groups">
+        <Column
+          header="Groups"
+          field="security_groups"
+        >
           <template #body="{ data: user }">
             <div class="flex flex-wrap gap-1">
               <Tag
@@ -233,70 +305,148 @@ onMounted(fetchUsers)
                 :severity="groupSeverity(g)"
                 class="text-[10px]"
               />
-              <span v-if="user.security_groups.length === 0" class="text-xs text-surface-400">None</span>
+              <span
+                v-if="user.security_groups.length === 0"
+                class="text-xs text-surface-400"
+              >None</span>
             </div>
           </template>
         </Column>
-        <Column header="Created" field="created_at">
+        <Column
+          header="Created"
+          field="created_at"
+        >
           <template #body="{ data: user }">
             <span class="text-xs text-surface-400">{{ formatDate(user.created_at) }}</span>
           </template>
         </Column>
-        <Column headerStyle="width: 6rem">
+        <Column header-style="width: 6rem">
           <template #body="{ data: user }">
             <div class="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
               <Button
                 text
                 rounded
                 class="!p-1.5"
-                @click.stop="openEdit(user)"
                 :aria-label="`Edit ${user.full_name || user.email}`"
+                @click.stop="openEdit(user)"
               >
-                <template #icon><Icon icon="tabler:edit" class="w-4 h-4" aria-hidden="true" /></template>
+                <template #icon>
+                  <Icon
+                    icon="tabler:edit"
+                    class="w-4 h-4"
+                    aria-hidden="true"
+                  />
+                </template>
               </Button>
               <Button
                 text
                 rounded
                 severity="danger"
                 class="!p-1.5"
-                @click.stop="confirmDelete(user)"
                 :aria-label="`Delete ${user.full_name || user.email}`"
+                @click.stop="confirmDelete(user)"
               >
-                <template #icon><Icon icon="tabler:trash" class="w-4 h-4" aria-hidden="true" /></template>
+                <template #icon>
+                  <Icon
+                    icon="tabler:trash"
+                    class="w-4 h-4"
+                    aria-hidden="true"
+                  />
+                </template>
               </Button>
             </div>
           </template>
         </Column>
       </DataTable>
 
-      <div v-else-if="!loading" class="h-full flex items-center justify-center">
+      <div
+        v-else-if="!isPending"
+        class="h-full flex items-center justify-center"
+      >
         <div class="text-center">
-          <Icon icon="tabler:users" class="w-10 h-10 text-surface-300 dark:text-surface-600 mx-auto mb-2" aria-hidden="true" />
-          <p class="text-sm text-surface-400 mb-3">No users yet</p>
-          <Button label="Create your first user" size="small" @click="showCreate = true" />
+          <Icon
+            icon="tabler:users"
+            class="w-10 h-10 text-surface-300 dark:text-surface-600 mx-auto mb-2"
+            aria-hidden="true"
+          />
+          <p class="text-sm text-surface-400 mb-3">
+            No users yet
+          </p>
+          <Button
+            label="Create your first user"
+            size="small"
+            @click="showCreate = true"
+          />
         </div>
       </div>
     </div>
 
-    <Dialog v-model:visible="showCreate" header="Create User" :style="{ width: '460px' }" modal>
-      <form @submit.prevent="createUser" class="space-y-4">
+    <Dialog
+      v-model:visible="showCreate"
+      header="Create User"
+      :style="{ width: '460px' }"
+      modal
+    >
+      <form
+        class="space-y-4"
+        @submit.prevent="createUser"
+      >
         <div>
-          <label for="create-email" class="block mb-1 text-xs font-medium text-muted-color">Email</label>
-          <InputText id="create-email" v-model="createForm.email" type="email" placeholder="user@example.com" fluid />
+          <label
+            for="create-email"
+            class="block mb-1 text-xs font-medium text-muted-color"
+          >Email</label>
+          <InputText
+            id="create-email"
+            v-model="createForm.email"
+            type="email"
+            placeholder="user@example.com"
+            fluid
+          />
         </div>
         <div>
-          <label for="create-name" class="block mb-1 text-xs font-medium text-muted-color">Full Name</label>
-          <InputText id="create-name" v-model="createForm.full_name" placeholder="Jane Doe" fluid />
+          <label
+            for="create-name"
+            class="block mb-1 text-xs font-medium text-muted-color"
+          >Full Name</label>
+          <InputText
+            id="create-name"
+            v-model="createForm.full_name"
+            placeholder="Jane Doe"
+            fluid
+          />
         </div>
         <div>
-          <label for="create-password" class="block mb-1 text-xs font-medium text-muted-color">Password</label>
-          <Password v-model="createForm.password" inputId="create-password" placeholder="Minimum 8 characters" :feedback="false" fluid toggleMask />
+          <label
+            for="create-password"
+            class="block mb-1 text-xs font-medium text-muted-color"
+          >Password</label>
+          <Password
+            v-model="createForm.password"
+            input-id="create-password"
+            placeholder="Minimum 8 characters"
+            :feedback="false"
+            fluid
+            toggle-mask
+          />
         </div>
         <div>
           <span class="block mb-1 text-xs font-medium text-muted-color">Security Groups</span>
-          <div class="space-y-2 mt-1.5" role="group" aria-label="Security groups">
-            <label v-for="sg in SECURITY_GROUPS" :key="sg.id" class="flex items-center gap-2 cursor-pointer text-surface-700 dark:text-surface-300">
-              <Checkbox v-model="createForm.groups" :value="sg.id" :aria-label="sg.label" />
+          <div
+            class="space-y-2 mt-1.5"
+            role="group"
+            aria-label="Security groups"
+          >
+            <label
+              v-for="sg in SECURITY_GROUPS"
+              :key="sg.id"
+              class="flex items-center gap-2 cursor-pointer text-surface-700 dark:text-surface-300"
+            >
+              <Checkbox
+                v-model="createForm.groups"
+                :value="sg.id"
+                :aria-label="sg.label"
+              />
               <span class="text-sm">{{ sg.label }}</span>
               <span class="text-[11px] text-surface-400 font-mono">{{ sg.id }}</span>
             </label>
@@ -305,35 +455,101 @@ onMounted(fetchUsers)
       </form>
       <template #footer>
         <div class="flex justify-end gap-2">
-          <Button label="Cancel" severity="secondary" text @click="showCreate = false" />
-          <Button label="Create" @click="createUser" :disabled="!createForm.email" />
+          <Button
+            label="Cancel"
+            severity="secondary"
+            text
+            @click="showCreate = false"
+          />
+          <Button
+            label="Create"
+            :disabled="!createForm.email || createMutation.isPending.value"
+            :loading="createMutation.isPending.value"
+            @click="createUser"
+          />
         </div>
       </template>
     </Dialog>
 
-    <Dialog v-model:visible="showEdit" header="Edit User" :style="{ width: '460px' }" modal>
-      <form @submit.prevent="saveUser" class="space-y-4">
+    <Dialog
+      v-model:visible="showEdit"
+      header="Edit User"
+      :style="{ width: '460px' }"
+      modal
+    >
+      <form
+        class="space-y-4"
+        @submit.prevent="saveUser"
+      >
         <div>
-          <label for="edit-email" class="block mb-1 text-xs font-medium text-muted-color">Email</label>
-          <InputText id="edit-email" v-model="editForm.email" type="email" fluid />
+          <label
+            for="edit-email"
+            class="block mb-1 text-xs font-medium text-muted-color"
+          >Email</label>
+          <InputText
+            id="edit-email"
+            v-model="editForm.email"
+            type="email"
+            fluid
+          />
         </div>
         <div>
-          <label for="edit-name" class="block mb-1 text-xs font-medium text-muted-color">Full Name</label>
-          <InputText id="edit-name" v-model="editForm.full_name" fluid />
+          <label
+            for="edit-name"
+            class="block mb-1 text-xs font-medium text-muted-color"
+          >Full Name</label>
+          <InputText
+            id="edit-name"
+            v-model="editForm.full_name"
+            fluid
+          />
         </div>
         <div>
-          <label for="edit-status" class="block mb-1 text-xs font-medium text-muted-color">Status</label>
-          <Select v-model="editForm.status" inputId="edit-status" :options="STATUS_OPTIONS" optionLabel="label" optionValue="value" fluid aria-label="User status" />
+          <label
+            for="edit-status"
+            class="block mb-1 text-xs font-medium text-muted-color"
+          >Status</label>
+          <Select
+            v-model="editForm.status"
+            input-id="edit-status"
+            :options="STATUS_OPTIONS"
+            option-label="label"
+            option-value="value"
+            fluid
+            aria-label="User status"
+          />
         </div>
         <div>
-          <label for="edit-password" class="block mb-1 text-xs font-medium text-muted-color">New Password</label>
-          <Password v-model="editForm.password" inputId="edit-password" placeholder="Leave empty to keep current" :feedback="false" fluid toggleMask />
+          <label
+            for="edit-password"
+            class="block mb-1 text-xs font-medium text-muted-color"
+          >New Password</label>
+          <Password
+            v-model="editForm.password"
+            input-id="edit-password"
+            placeholder="Leave empty to keep current"
+            :feedback="false"
+            fluid
+            toggle-mask
+          />
         </div>
         <div>
           <span class="block mb-1 text-xs font-medium text-muted-color">Security Groups</span>
-          <div class="space-y-2 mt-1.5" role="group" aria-label="Security groups">
-            <label v-for="sg in SECURITY_GROUPS" :key="sg.id" class="flex items-center gap-2 cursor-pointer text-surface-700 dark:text-surface-300">
-              <Checkbox v-model="editForm.groups" :value="sg.id" :aria-label="sg.label" />
+          <div
+            class="space-y-2 mt-1.5"
+            role="group"
+            aria-label="Security groups"
+          >
+            <label
+              v-for="sg in SECURITY_GROUPS"
+              :key="sg.id"
+              class="flex items-center gap-2 cursor-pointer text-surface-700 dark:text-surface-300"
+            >
+              <Checkbox
+                v-model="editForm.groups"
+                :value="sg.id"
+                :aria-label="sg.label"
+              />
               <span class="text-sm">{{ sg.label }}</span>
               <span class="text-[11px] text-surface-400 font-mono">{{ sg.id }}</span>
             </label>
@@ -342,11 +558,20 @@ onMounted(fetchUsers)
       </form>
       <template #footer>
         <div class="flex justify-end gap-2">
-          <Button label="Cancel" severity="secondary" text @click="showEdit = false" />
-          <Button label="Save" @click="saveUser" />
+          <Button
+            label="Cancel"
+            severity="secondary"
+            text
+            @click="showEdit = false"
+          />
+          <Button
+            label="Save"
+            :disabled="saveMutation.isPending.value"
+            :loading="saveMutation.isPending.value"
+            @click="saveUser"
+          />
         </div>
       </template>
     </Dialog>
-
   </div>
 </template>

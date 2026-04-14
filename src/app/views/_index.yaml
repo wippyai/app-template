@@ -15,6 +15,14 @@ entries:
       url: /app
       base_path: app/main
       entry_point: app.html
+      # config_overrides: Per-page AppConfig overrides. Injected into child iframe
+      # as window.__WIPPY_CONFIG_OVERRIDES__ before proxy.js loads.
+      # cssVariables/customCSS replace (not merge), iconSets merge additively.
+      # Example: override primary color to red for this page only:
+      # config_overrides:
+      #   customization:
+      #     cssVariables:
+      #       "--p-primary": "#ef4444"
     proxy:
       enabled: true
       css:
@@ -177,6 +185,34 @@ entries:
             type: string
             default: ""
             description: JSON object of tag→attributes mappings for sanitize-html
+
+  - name: counter-persist
+    kind: registry.entry
+    meta:
+      type: view.component
+      name: counter-persist
+      title: Counter Persist
+      tag_name: example-counter-persist
+      entry_point: index.js
+      announced: true
+      secure: false
+      auto_register: true
+      url: /app/wc/counter-persist
+      props:
+        type: object
+        properties:
+          persist-key:
+            type: string
+            description: Key prefix for state persistence. Different keys = separate state.
+      events:
+        type: object
+        properties:
+          count-changed:
+            type: object
+            properties:
+              count:
+                type: number
+            description: Fired when count value changes
 
   - name: model-gallery
     kind: registry.entry

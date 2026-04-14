@@ -28,6 +28,7 @@ entries:
     traits:
       - id: userspace.user.traits:user_aware
       - id: app.agents:wippy_nav_trait
+      - id: app.agents:wippy_artifacts_trait
 
   - name: wippy_nav_trait
     kind: registry.entry
@@ -41,6 +42,76 @@ entries:
       Use NavigateTo when the user wants to open or view a specific page.
     tools:
       - app.agents:navigate_to
+
+  - name: wippy_artifacts_trait
+    kind: registry.entry
+    meta:
+      type: agent.trait
+      title: Wippy Artifacts
+      tags:
+        - artifacts
+    prompt: |
+      You have the CreateArtifact tool to create rich content artifacts displayed inline in the chat.
+
+      Two modes:
+      1. **Content mode** — pass `content` (HTML or Markdown) directly.
+         Use for: formatted text, code snippets, tables, documentation.
+      2. **Component mode** — pass `tag_name` and `props` to render a registered web component.
+         Use for: diagrams, interactive widgets, visualizations.
+         Only use tag names from the available components list in the session context.
+
+      After calling the tool you will receive instructions with an artifact tag — include that tag in your response.
+    tools:
+      - app.agents:create_artifact
+
+  - name: create_artifact
+    kind: function.lua
+    meta:
+      type: tool
+      title: Create Artifact
+      input_schema: |
+        {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "Title for the artifact"
+            },
+            "content": {
+              "type": "string",
+              "description": "The content body. For content mode: HTML or Markdown string. For component mode: optional, usually use props instead."
+            },
+            "content_type": {
+              "type": "string",
+              "description": "MIME type for content mode",
+              "enum": ["text/html", "text/markdown"],
+              "default": "text/markdown"
+            },
+            "tag_name": {
+              "type": "string",
+              "description": "Web component tag name for component mode (e.g. 'example-mermaid'). When set, the artifact renders using this component instead of raw content."
+            },
+            "props": {
+              "type": "object",
+              "description": "Props object passed to the web component. Only used with tag_name."
+            }
+          },
+          "required": ["title"],
+          "additionalProperties": false
+        }
+      llm_alias: CreateArtifact
+      llm_description: |
+        Create a rich content artifact rendered inline in the chat.
+        Two modes: (1) Content mode — provide title + content (HTML or Markdown).
+        (2) Component mode — provide title + tag_name + props to render a registered web component.
+        Use component mode when a matching component is available (check session context for available components).
+    source: file://create_artifact.lua
+    modules:
+      - json
+    imports: {}
+    method: handler
+    pool:
+      size: 2
 
   - name: navigate_to
     kind: function.lua

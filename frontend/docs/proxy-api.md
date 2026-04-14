@@ -10,13 +10,16 @@ To integrate with Wippy, use the `getWippyApi()` promise or the `$W` global vari
 
 ```typescript
 // Using getWippyApi()
-const { config, host, api, on } = await getWippyApi()
+const { config, host, api, on, logger, state, ws } = await getWippyApi()
 
 // Or use the $W global for individual access
 const config = await $W.config()
 const host = await $W.host()
 const api = await $W.api()
 const on = await $W.on()
+const logger = await $W.logger()
+const state = await $W.state()
+const ws = await $W.ws()
 const instance = await $W.instance() // Full ProxyApiInstance
 ```
 
@@ -26,7 +29,10 @@ The initialization returns the following components:
 2. `host` - Host application communication methods
 3. `api` - Authenticated axios instance with automatic auth token injection
 4. `on` - Subscription to real-time events from WebSocket layer
-5. `loadWebComponent` - Function to dynamically load other web components
+5. `logger` - Structured logging — logs traverse child → host → parent for centralized collection. Use instead of `console.log/error` for production logging.
+6. `loadWebComponent` - Function to dynamically load other web components
+7. `state` - Host-mediated state persistence (survives iframe destruction)
+8. `ws` - WebSocket send bridge — send commands through the host's WebSocket connection
 
 ---
 
@@ -253,6 +259,84 @@ const result = await api.post('/api/users', {
 })
 ```
 
+### File Upload
+
+Upload files using `FormData`. The default JSON content type is automatically replaced when sending `FormData`:
+
+```typescript
+const api = useApi()
+
+const file: File = /* from <input type="file"> or drag-and-drop */
+const formData = new FormData()
+formData.append('file', file)
+
+const abort = new AbortController()
+
+const response = await api.post('/api/v1/uploads', formData, {
+  signal: abort.signal,
+  headers: { 'Content-Type': 'multipart/form-data' },
+  onUploadProgress: (progressEvent) => {
+    if (!progressEvent.total) return
+    const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+    console.log(`Upload progress: ${percent}%`)
+  },
+})
+
+// Response: { success: boolean, uuid: string }
+const uploadedUuid = response.data.uuid
+```
+
+To cancel an upload, call `abort.abort()`.
+
+Track processing status via WebSocket events:
+
+```typescript
+const { on } = useWippy()
+
+on(`upload:${uploadedUuid}`, (msg) => {
+  // msg.data.status: 'uploaded' | 'completed' | 'error' | 'processing'
+  console.log('Upload status:', msg.data.status)
+})
+```
+
+### File Download
+
+Download binary files by setting `responseType: 'blob'`:
+
+```typescript
+const api = useApi()
+
+const response = await api.get(`/api/v1/uploads/${uuid}/download`, {
+  responseType: 'blob',
+})
+
+// Create a download link
+const url = URL.createObjectURL(response.data)
+const a = document.createElement('a')
+a.href = url
+a.download = 'filename.pdf'
+a.click()
+URL.revokeObjectURL(url)
+```
+
+### Retrieve Upload Info
+
+```typescript
+const api = useApi()
+
+// List uploads with pagination
+const list = await api.get('/api/v1/uploads/list', {
+  params: { limit: 10, offset: 0 },
+})
+// list.data.uploads: Array<{ uuid, mime_type, size, status, meta: { filename } }>
+
+// Get a specific upload
+const upload = await api.get(`/api/v1/uploads/${uuid}`)
+// upload.data: { uuid, mime_type, size, status, meta: { filename, content_sample? } }
+```
+
+> **Note:** Maximum file size is 100 MB.
+
 ---
 
 ## on() Events
@@ -296,6 +380,16 @@ on('@message', (message) => {
 })
 ```
 
+### @state-error
+
+Emitted when a state save operation fails (e.g., quota exceeded).
+
+```typescript
+on('@state-error', ({ error, key }) => {
+  console.warn(`State save failed for "${key}": ${error}`)
+})
+```
+
 ### Topic Patterns
 
 Colon-separated parts with `*` wildcard matching:
@@ -319,6 +413,148 @@ on('session:abc-123:message:*', (event) => {
 on('session:' + encodeURIComponent('id:with:colons') + ':message:*', (event) => {
   console.log('Message event:', event)
 })
+```
+
+---
+
+## state Object
+
+The `state` object provides host-mediated key-value storage that persists across iframe reloads. Scoped automatically per page/artifact UUID.
+
+All methods accept an optional `options` parameter with a `scope` field to override the default page-level scope. This is used by web components with `persist-key` or nested artifacts to isolate state per instance.
+
+### state.get
+
+```typescript
+state.get<T = unknown>(key: string, options?: { scope?: string }): Promise<T | null>
+```
+
+Retrieves a previously saved value. Returns `null` if not found.
+
+### state.set
+
+```typescript
+state.set(key: string, value: unknown, options?: { scope?: string }): Promise<void>
+```
+
+Saves a JSON-serializable value. Resolves immediately without waiting for host acknowledgment. If quota is exceeded, a `@state-error` event is emitted asynchronously.
+
+### state.remove
+
+```typescript
+state.remove(key: string, options?: { scope?: string }): Promise<void>
+```
+
+Removes a single key from this page's state.
+
+### state.clear
+
+```typescript
+state.clear(options?: { scope?: string }): Promise<void>
+```
+
+Removes all state for this page/scope.
+
+### state.getAll
+
+```typescript
+state.getAll(options?: { scope?: string }): Promise<Record<string, unknown>>
+```
+
+Returns all saved state as a flat object. Useful for bulk hydration.
+
+### Scope
+
+By default, state is scoped to the page/artifact UUID (set by the host). The `scope` option overrides this, allowing multiple instances of the same component to maintain separate state.
+
+> **WARNING:** Scope values must be **globally unique** across your application. If two unrelated components use the same scope string, their state will collide. Use descriptive, namespaced keys (e.g., `my-app:sidebar-counter`, `dashboard:filter-panel`).
+>
+> When using `@wippy-fe/pinia-persist`, custom scopes are automatically prefixed with `@custom:` to prevent collisions with system scopes (page/artifact UUIDs). The raw `state` API passes scope values as-is — if using it directly, you must manage namespacing yourself.
+
+### Example: Caching API Data
+
+```typescript
+const { state, on } = await getWippyApi()
+
+// Restore cached data on mount, fall back to API
+const cached = await state.get<User[]>('users')
+if (cached) {
+  users.value = cached
+} else {
+  const { data } = await api.get('/api/v1/users')
+  users.value = data.users
+  await state.set('users', users.value)
+}
+
+// Save when page goes to background
+on('@visibility', (visible) => {
+  if (!visible) state.set('users', users.value)
+})
+```
+
+---
+
+## ws Object
+
+The `ws` object lets child apps send commands through the host's WebSocket connection.
+
+### send
+
+```typescript
+ws.send(command: WsCommand): void
+```
+
+Send a raw WebSocket command. Fire-and-forget — responses arrive via `on()` event subscriptions.
+
+```typescript
+const { ws, on } = await getWippyApi()
+
+// Listen for responses
+on('session:my-session:message:*', (msg) => {
+  console.log('Response:', msg.data)
+})
+
+// Send a message
+ws.send({
+  type: 'session_message',
+  session_id: 'my-session',
+  message_id: crypto.randomUUID(),
+  data: { text: 'Hello from child app' },
+})
+```
+
+### sendWithResponse
+
+```typescript
+ws.sendWithResponse(command: WsCommand): Promise<WsMessage>
+```
+
+Send a command and wait for the server's response. Times out after 30 seconds.
+
+```typescript
+const { ws } = await getWippyApi()
+
+const response = await ws.sendWithResponse({
+  type: 'session_open',
+  start_token: 'my-token',
+})
+console.log('Session opened:', response.data)
+```
+
+### sendCommand
+
+```typescript
+ws.sendCommand(sessionId: string, data: { command: string, [key: string]: unknown }): void
+```
+
+Convenience method for session commands (stop, model, agent).
+
+```typescript
+const { ws } = await getWippyApi()
+
+ws.sendCommand('session-uuid', { command: 'stop' })
+ws.sendCommand('session-uuid', { command: 'model', name: 'gpt-4' })
+ws.sendCommand('session-uuid', { command: 'agent', name: 'my-agent' })
 ```
 
 ---
@@ -536,3 +772,96 @@ w-artifact::part(frame)  { border: 0; }
 4. All iframe → host commands are bridged automatically
 5. If `sub-path` is supplied, its value is forwarded to the inner iframe as `config.path`
 6. Markdown and inline-interactive artifacts are **not** supported - only plain iframe renders
+
+---
+
+## Loading & Error Components
+
+Two zero-dependency web components are auto-registered via `loading.js` (injected before `proxy.js`). No imports or manual registration needed — just use the HTML tags.
+
+### `<wippy-loading>`
+
+Fullscreen loading spinner with theme-aware colors. The animation is time-synced to the system clock, so mount/remount preserves the spinner phase (no visual jump).
+
+| Attribute | Description |
+|-----------|-------------|
+| `title` | Main text (e.g. "Loading...") |
+| `subtitle` | Secondary text |
+| `no-bg` | Boolean — transparent background for overlay use |
+
+```html
+<!-- Fullscreen (standalone use in app.html or page body) -->
+<wippy-loading title="Loading..." subtitle="Please wait"></wippy-loading>
+
+<!-- Overlay mode (transparent bg, parent controls backdrop) -->
+<wippy-loading no-bg title="Loading page content..."></wippy-loading>
+```
+
+### `<wippy-error>`
+
+Fullscreen error/warning display with icon and severity-based coloring.
+
+| Attribute | Values | Default |
+|-----------|--------|---------|
+| `title` | Any string | "Something went wrong" |
+| `message` | Any string | (empty) |
+| `icon` | `circle`, `triangle`, `sad` | `circle` |
+| `severity` | `danger`, `warning` | `danger` |
+| `no-bg` | Boolean — transparent background | (absent) |
+
+```html
+<wippy-error title="Failed to load" message="Server returned 500" icon="circle" severity="danger"></wippy-error>
+<wippy-error title="Connection Lost" message="Retrying..." icon="triangle" severity="warning"></wippy-error>
+```
+
+### Recommended Pattern
+
+Do NOT build custom loading divs or CSS spinners — use `<wippy-loading>` and `<wippy-error>` for all fullscreen states. They follow the platform theme automatically (colors, dark mode) and provide a consistent experience across all pages.
+
+**Vanilla HTML page:**
+```html
+<body>
+  <wippy-loading id="loader" title="Loading..."></wippy-loading>
+  <div id="content" style="display:none">
+    <!-- your content -->
+  </div>
+  <script>
+    async function init() {
+      try {
+        const { api, host } = await getWippyApi()
+        // ... fetch data, set up page ...
+        document.getElementById('loader').remove()
+        document.getElementById('content').style.display = 'block'
+      } catch (error) {
+        var errorEl = document.createElement('wippy-error')
+        errorEl.setAttribute('title', 'Initialization failed')
+        errorEl.setAttribute('message', error.message)
+        document.getElementById('loader').replaceWith(errorEl)
+      }
+    }
+    init()
+  </script>
+</body>
+```
+
+**Vue 3 app (app.html entry point):**
+```html
+<body>
+  <div id="app">
+    <wippy-loading title="Loading..."></wippy-loading>
+  </div>
+  <script type="module" src="./src/app.ts"></script>
+</body>
+```
+When Vue mounts into `#app`, it replaces the `<wippy-loading>` element automatically — no manual cleanup needed.
+
+### CSS Custom Properties
+
+Both components use Shadow DOM and inherit CSS variables from `@wippy-fe/theme`:
+- `--p-primary` — spinner accent color
+- `--p-surface-0` / `--p-surface-900` — background (light/dark)
+- `--p-text-color` — title text
+- `--p-text-muted-color` — subtitle/message text
+- `--p-danger-*` / `--p-warn-*` — error/warning severity colors
+
+If the theme CSS is not loaded (e.g., facade before config fetch), hardcoded fallbacks are used.

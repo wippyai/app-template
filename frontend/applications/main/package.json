@@ -4,7 +4,11 @@
   "specification": "wippy-component-1.0",
   "title": "Wippy App",
   "description": "Main application page for Wippy platform",
-  "files": ["dist/", "src/", "package.json"],
+  "files": [
+    "dist/",
+    "src/",
+    "package.json"
+  ],
   "browser": "dist/app.js",
   "wippy": {
     "type": "page",
@@ -26,7 +30,8 @@
         "tailwindConfig": false,
         "resizeObserver": false,
         "preventLinkClicks": false,
-        "iconifyIcons": false
+        "iconifyIcons": false,
+        "errorCapture": true
       }
     },
     "scripts": {
@@ -38,27 +43,38 @@
     "build": "vite build",
     "build:debug": "vite build --mode development",
     "dev": "vite build --watch",
-    "type-check": "vue-tsc --build --force"
+    "type-check": "vue-tsc --build --force",
+    "lint": "eslint src --ext .ts,.vue",
+    "lint:fix": "eslint src --ext .ts,.vue --fix"
   },
   "dependencies": {
-    "@wippy-fe/theme": "^0.0.12"
+    "@wippy-fe/theme": "^0.0.20"
   },
   "devDependencies": {
-    "@wippy-fe/types-global-proxy": "^0.0.12",
+    "@tanstack/query-core": "^5.90.20",
+    "@tanstack/vue-query": "^5.92.9",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
     "@vitejs/plugin-vue": "^5.0.0",
+    "@wippy-fe/types-global-proxy": "^0.0.20",
     "autoprefixer": "^10.4.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-vue": "^9.0.0",
     "postcss": "^8.4.0",
     "primevue": "^4.3.3",
     "tailwindcss": "3",
     "typescript": "^5.0.0",
     "vite": "^6.0.0",
     "vue": "^3.5.0",
+    "vue-eslint-parser": "^9.4.3",
     "vue-router": "^4.6.4",
     "vue-tsc": "^2.0.0"
   },
   "peerDependencies": {
     "@iconify/vue": "^5.0.0",
-    "@wippy-fe/proxy": "^0.0.12",
+    "@tanstack/vue-query": "^5.69.0",
+    "@wippy-fe/pinia-persist": "^0.0.20",
+    "@wippy-fe/proxy": "^0.0.20",
     "axios": "^1.0.0",
     "luxon": "^3.5.0",
     "pinia": "^2.1.0",

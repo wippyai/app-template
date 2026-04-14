@@ -165,7 +165,52 @@ For pages to appear in the application navigation menu, include these fields in 
 - **`wippy.events`** - JSON Schema describing custom events the component can emit - **Recommended for ESM module**
 - **`wippy.path`** - HTML entry point - **Required for Web App only**
 - **`wippy.proxy`** - Proxy configuration - **Required for Web App only**
+- **`wippy.configOverrides`** - Per-page AppConfig overrides (customization, feature flags) - **Optional for Web App**
 - **`wippy.cache`** - List of files/folder that build server can cache between builds, `["node_modules"]` by default
+
+### wippy.configOverrides (Per-Page Overrides)
+
+Pages can override the host's AppConfig to customize their own appearance or behavior. Overrides are merged into the config before CSS variables are applied, so each page can have its own theme.
+
+```json
+{
+  "wippy": {
+    "path": "dist/index.html",
+    "proxy": { "enabled": true, "injections": { "css": { "customCss": true, "customVariables": true } } },
+    "configOverrides": {
+      "customization": {
+        "cssVariables": {
+          "p-primary-500": "#ff6b00",
+          "@dark": { "p-primary-500": "#ff8c3a" }
+        },
+        "customCSS": ".dashboard-header { border-radius: 12px; }"
+      }
+    }
+  }
+}
+```
+
+**Merge rules:**
+- `cssVariables`: **replaces** the host's CSS variables (page provides its own complete theme)
+- `customCSS`: **replaces** the host's custom CSS
+- `icons`: **merges** additively (page adds icons on top of host's)
+- `feature` flags: **deep merges** (e.g., override `routePrefix` or `apiRoutes`)
+
+**How it works at runtime:**
+1. Host reads `wippy.configOverrides` from the package.json
+2. Injects `window.__WIPPY_CONFIG_OVERRIDES__` into the iframe's srcdoc before proxy.js loads
+3. proxy.js merges overrides into the resolved config before applying CSS variables
+4. Nested `<w-artifact>` iframes inherit the merged config automatically
+
+For testing in standalone mode (dev-proxy), set the global manually:
+```html
+<script>
+  window.__WIPPY_CONFIG_OVERRIDES__ = {
+    customization: { cssVariables: { "p-primary-500": "#ff6b00" } }
+  }
+</script>
+<script src="http://localhost:5173/dev-proxy.js"></script>
+```
 
 ## Wippy Configuration
 
@@ -280,11 +325,13 @@ export const webComponent: () => Promise<typeof HTMLElement>
 
 The page is defined by the `wippy.path` field in package.json.
 
-The HTML file specified in `wippy.path` **MUST** include a `<script type="text/javascript" data-role="@wippy/scripts">` element where additional scripts will be automatically injected.
+The HTML file specified in `wippy.path` **MUST** include a `<script type="text/javascript" data-role="@wippy/scripts">` element where additional scripts will be automatically injected. The host injects `loading.js` (registers `<wippy-loading>` and `<wippy-error>`) and `proxy.js` before this marker.
 
 The page **SHOULD** include an `<script type="importmap">` element with the merged import-map so that ES-Modules work without bundling.
 
 Inside the page you **MUST** use the [Proxy API](./proxy-api.md) API to talk to the host unless you explicitly disabled it. Note you wont have access to host config, including auth token, like this.
+
+For fullscreen loading and error states, use `<wippy-loading>` and `<wippy-error>` — they are auto-registered and theme-aware. See the [Loading & Error Components](./proxy-api.md#loading--error-components) section in proxy-api.md for the full attribute reference.
 
 ## External Dependencies
 
@@ -329,6 +376,8 @@ For the specification **wippy-component-v1** the following libraries are provide
 | `@tanstack/query-core` | Query core | 5.69.0 |
 
 > **Note:** `nanoevents` and `luxon` are provided by the host import map for convenience, but components are not required to use them. Only `vue`, `pinia`, `@iconify/vue`, and `@wippy-fe/proxy` are required externals that every component must declare.
+>
+> **`@wippy-fe/pinia-persist`** (v0.0.13) is an npm package but is **NOT** on the CDN import map. It must be bundled into your component — do not add it to `rollupOptions.external`.
 
 > **⚠︎  Do not bundle required external libraries** – always import them directly and rely on the host import-map:
 >

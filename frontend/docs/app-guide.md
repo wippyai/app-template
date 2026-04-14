@@ -665,7 +665,7 @@ if (date.isValid) {
 - **Follow Vue 3 Composition API patterns** exclusively
 - **Implement proper error handling** for all async operations
 - **Consider mobile responsiveness** in all UI designs
-- **Add loading states** for better user experience
+- **Add loading states** for better user experience — use `<wippy-loading>` for fullscreen loading and `<wippy-error>` for fullscreen errors (auto-registered via `loading.js`, no imports needed)
 - **Use semantic HTML** and proper ARIA labels for accessibility
 - **Optimize for performance** with lazy loading and code splitting
 - **Follow consistent naming conventions** throughout the codebase
