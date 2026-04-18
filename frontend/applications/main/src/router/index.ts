@@ -29,6 +29,11 @@ const routes = [
     component: () => import('../pages/iframe-demo.vue'),
   },
   {
+    path: '/nested-nav/:part(.*)*',
+    name: 'nested-nav',
+    component: () => import('../pages/nested-nav.vue'),
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
     redirect: '/',

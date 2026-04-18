@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRoute, RouterLink } from 'vue-router'
 import { Icon } from '@iconify/vue'
 
-const router = useRouter()
 const route = useRoute()
 
 const tabs = [
@@ -13,10 +12,6 @@ const tabs = [
 ]
 
 const currentName = computed(() => route.name)
-
-function navigate(path: string) {
-  router.push(path)
-}
 
 const primaryColor = ref('')
 onMounted(() => {
@@ -40,18 +35,18 @@ onMounted(() => {
       </span>
 
       <nav class="flex gap-1 ml-auto">
-        <button
+        <RouterLink
           v-for="tab in tabs"
           :key="tab.name"
-          class="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-colors"
+          :to="tab.path"
+          class="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-colors no-underline"
           :class="currentName === tab.name || (currentName === 'home' && tab.name === 'chart')
             ? 'bg-primary/10 text-primary'
             : 'text-surface-500 hover:text-surface-700 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-700'"
-          @click="navigate(tab.path)"
         >
           <Icon :icon="tab.icon" class="w-3.5 h-3.5" />
           {{ tab.label }}
-        </button>
+        </RouterLink>
       </nav>
     </header>
 
