@@ -26,7 +26,7 @@ const routes = [
   {
     path: '/mermaid',
     name: 'mermaid',
-    component: () => import('../pages/reactions.vue'),
+    component: () => import('../pages/mermaid.vue'),
   },
   {
     path: '/:pathMatch(.*)*',
