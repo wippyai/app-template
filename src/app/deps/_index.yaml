@@ -248,6 +248,27 @@ entries:
         value: "fs://css-variables.facade.json"
       - name: content_fs
         value: app:app_fs
+      # Managed-layout demo declaration. INERT unless the app is launched
+      # with `-o wippy.facade:fe_mode:default=managed` — the facade only
+      # forwards it to `hostConfig.layout`, and the compat entry
+      # (`module.js`) ignores that key entirely. So committing it here
+      # costs the default compat boot nothing while keeping the managed
+      # pass reproducible without a hand-typed override.
+      #
+      # A FLAT JSON STRING, not nested YAML: the facade passes requirement
+      # values through as scalars, so a nested block would arrive as a
+      # string of YAML the host cannot parse. This is the one thing the
+      # gen-2-chat harness cannot prove, since it feeds the declaration in
+      # as a live object.
+      #
+      # Exercises, in one declaration: builtin panel (nav), two real page
+      # panels (both with mountRoutes, so routeSync has a genuine prefix
+      # to derive), a collapsible side panel with an anchored edge tab,
+      # a modal template the coordinator fills in, and the compat
+      # coordinator itself.
+      - name: host_config_layout
+        value: >-
+          {"layouts":{"default":{"direction":"horizontal","children":[{"panel":"nav","size":"240px"},{"panel":"main","size":"1fr","main":true},{"panel":"side","size":"360px","collapsible":true}]}},"panels":{"nav":{"kind":"builtin","id":"@HOST/nav-sidebar"},"main":{"kind":"page","id":"app.views:main"},"side":{"kind":"page","id":"app.views:iframe-demo"}},"modals":{"artifact-modal":{"kind":"artifact","id":"pending"}},"floating":{"side-tab":{"kind":"builtin","id":"@HOST/panel-tab","chrome":false,"anchor":{"panel":"side","area":"left center","right":0,"top":"50%"},"position":{"x":0,"y":0},"size":{"width":24,"height":72},"props":{"target":"side","edge":"right"}}},"coordinators":{"compat":{"kind":"builtin","id":"@HOST/compat-coordinator","props":{"artifactPanel":"side","chatPanel":"side","modalId":"artifact-modal","routeSync":true}}}}
       # Three-state so it follows a forced themeMode too (not just OS):
       # base light + auto-dark (gated against forced-light) + forced-dark class.
       - name: host_custom_css

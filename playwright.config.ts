@@ -20,6 +20,15 @@ const WIPPY_URL = process.env.WIPPY_URL || 'http://localhost:8086'
 
 export default defineConfig({
   testDir: './e2e',
+  /*
+   * `managed-layout.spec.ts` needs the app launched with
+   * `-o wippy.facade:fe_mode:default=managed`, and managed and compat
+   * boots are mutually exclusive — one wippy instance, one shared
+   * `app.db`. It is therefore a separate, sequential pass
+   * (`pnpm test:e2e:managed`), not part of the default suite, which
+   * assumes the default compat chrome.
+   */
+  testIgnore: ['**/managed-layout.spec.ts'],
   fullyParallel: false, // Wippy session is stateful; serialize for now.
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
